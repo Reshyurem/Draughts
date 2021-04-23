@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <math.h>
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_timer.h>
 #include <SDL2/SDL_image.h>
@@ -171,6 +172,47 @@ void display(){
     SDL_RenderPresent(Rend);
 }
 
+void move(int PieceNo, int BlackorWhite, int x, int y){
+    int x_pos, y_pos, x_final, y_final, distx, disty;
+    if(BlackorWhite == 0){
+        x_pos = Blacks[PieceNo].x;
+        y_pos = Blacks[PieceNo].y;
+        x_final = pos[x][y].x - Blacks[PieceNo].w / 2;
+        y_final = pos[x][y].y - Blacks[PieceNo].h / 2;
+
+        distx = (x_final - x_pos) / 60;                 // Amount to move by in x direction
+        disty = (y_final - y_pos) / 60;                 // Amount to move by in y direction
+
+        while(x_pos != x_final || y_pos != y_final){    // May Bug out if distx and disty are not equal
+            x_pos += distx;                             // Need to check and fix if problem exists
+            y_pos += disty;
+
+            Blacks[PieceNo].x = x_pos;
+            Blacks[PieceNo].y = y_pos;
+            display();
+            SDL_Delay(500 / 60);
+        }
+    }
+    else{
+        x_pos = Whites[PieceNo].x;
+        y_pos = Whites[PieceNo].y;
+        x_final = pos[x][y].x - Whites[PieceNo].w / 2;
+        y_final = pos[x][y].y - Whites[PieceNo].h / 2;
+
+        distx = (x_final - x_pos) / 60;                 // Amount to move by in x direction
+        disty = (y_final - y_pos) / 60;                 // Amount to move by in y direction
+
+        while(x_pos != x_final && y_pos != y_final){    // May Bug out if distx and disty are not equal
+            x_pos += distx;                             // Need to check and fix if problem exists
+            y_pos += disty;
+            Whites[PieceNo].x = x_pos;
+            Whites[PieceNo].y = y_pos;
+            display();
+            SDL_Delay(500 / 60);
+        }
+    }
+}
+
 void destroy(){
     // Destroy all textures and renderers and windows
     int i;
@@ -195,7 +237,7 @@ int main(void)
     makeWhite();
 
     display();
-
+    move(11, 0, 3, 4);
     SDL_Delay(15000);
 
     destroy();
