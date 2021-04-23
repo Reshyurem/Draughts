@@ -99,6 +99,7 @@ void makeBlack(){
     Surface = IMG_Load("resources/black_piece.png");
     int i;
 
+    // load black piece image into memory
     Black_tex = SDL_CreateTextureFromSurface(Rend, Surface);
     SDL_FreeSurface(Surface);
     if (!Black_tex)
@@ -110,12 +111,14 @@ void makeBlack(){
         exit(1);
     }
 
+    // load image of black piece onto each piece
     for(i = 0; i < 12; i++){
         SDL_QueryTexture(Black_tex, NULL, NULL, &Blacks[i].w, &Blacks[i].h);
         Blacks[i].w = WINDOW_WIDTH / 9;
         Blacks[i].h = WINDOW_HEIGHT / 9;
     }
 
+    // calculate initial position of each black piece and assign it
     for(i = 0; i < 4; i++){
         Blacks[i].x = pos[7][i * 2].x - Blacks[i].w / 2;
         Blacks[i].y = pos[7][i].y - Blacks[i].h / 2;
@@ -130,6 +133,7 @@ void makeWhite(){
     Surface = IMG_Load("resources/white_piece.png");
     int i;
 
+    // load black piece image into memory
     White_tex = SDL_CreateTextureFromSurface(Rend, Surface);
     SDL_FreeSurface(Surface);
     if (!White_tex)
@@ -141,12 +145,14 @@ void makeWhite(){
         exit(1);
     }
 
+    // load image of white piece onto each piece
     for(i = 0; i < 12; i++){
         SDL_QueryTexture(White_tex, NULL, NULL, &Whites[i].w, &Whites[i].h);
         Whites[i].w = WINDOW_WIDTH / 9;
         Whites[i].h = WINDOW_HEIGHT / 9;
     }
 
+    // calculate initial position of each white piece and assign it
     for(i = 0; i < 4; i++){
         Whites[i].x = pos[0][1 + i * 2].x - Whites[i].w / 2;
         Whites[i].y = pos[0][i].y - Whites[i].h / 2;
@@ -171,6 +177,7 @@ void display(){
         SDL_RenderCopy(Rend, White_tex, NULL, &Whites[i]);
     }
 
+    // Upload Render to the Window
     SDL_RenderPresent(Rend);
 }
 
@@ -188,8 +195,8 @@ void move(int PieceNo, int BlackorWhite, int x, int y){
         distx = (x_final - x_pos) / 60;                 // Amount to move by in x direction
         disty = (y_final - y_pos) / 60;                 // Amount to move by in y direction
 
-        while(x_pos != x_final || y_pos != y_final){    // May Bug out if distx and disty are not equal
-            x_pos += distx;                             // Need to check and fix if problem exists
+        while(x_pos != x_final || y_pos != y_final){
+            x_pos += distx;
             y_pos += disty;
 
             Blacks[PieceNo].x = x_pos;
@@ -207,8 +214,8 @@ void move(int PieceNo, int BlackorWhite, int x, int y){
         distx = (x_final - x_pos) / 60;                 // Amount to move by in x direction
         disty = (y_final - y_pos) / 60;                 // Amount to move by in y direction
 
-        while(x_pos != x_final && y_pos != y_final){    // May Bug out if distx and disty are not equal
-            x_pos += distx;                             // Need to check and fix if problem exists
+        while(x_pos != x_final && y_pos != y_final){
+            x_pos += distx;
             y_pos += disty;
             Whites[PieceNo].x = x_pos;
             Whites[PieceNo].y = y_pos;
@@ -233,7 +240,8 @@ void destroy(){
     SDL_Quit();
 }
 
-int bs(int element){            //Not Working, need to debug
+int bs(int element){
+    // Basic Binary Search of ranges
     int beg = 0, end = 7;
     int mid = (beg + end) / 2;
 
@@ -253,12 +261,13 @@ int bs(int element){            //Not Working, need to debug
 }
 
 void select(int mouse_x, int mouse_y, int* select_x, int* select_y){
+    // Based on mouse position, assigns select the value of the row and column the mouse is currently in
     *select_x = bs(mouse_x);
     *select_y = bs(mouse_y);
-    printf("%d %d\n", *select_x, *select_y);
 }
 
 void process(){
+    // The function that combines everything
     int close_req = 0, mouse_x, mouse_y, button, select_x, select_y;
 
     init();
@@ -270,16 +279,16 @@ void process(){
     while(!close_req){
         // Checking events
         SDL_Event event;
-        while(SDL_PollEvent(&event)){
-            if(event.type == SDL_QUIT){
+        while(SDL_PollEvent(&event)){           // If there is an event, it is then assigned to event and becomes true
+            if(event.type == SDL_QUIT){         // If the event was a quit window event
                 close_req = 1;
             }
         }
-        button = SDL_GetMouseState(&mouse_x, &mouse_y);
-        if(button & SDL_BUTTON(SDL_BUTTON_LEFT)){
-            select(mouse_x, mouse_y, &select_x, &select_y);
+        button = SDL_GetMouseState(&mouse_x, &mouse_y);     // button becomes true if the mouse is in the window
+        if(button & SDL_BUTTON(SDL_BUTTON_LEFT)){           // Only true if the mouse is in the window and left button is clicked
+            select(mouse_x, mouse_y, &select_x, &select_y); // Assigns the row and column position mouse is currently in
         }
-        display();
+        display();                                          // Refreshes the display
         move(11, 0, 4, 3);
     }
     destroy();
