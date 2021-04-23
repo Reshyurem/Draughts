@@ -3,8 +3,8 @@
 #include <SDL2/SDL_timer.h>
 #include <SDL2/SDL_image.h>
 
-#define WINDOW_WIDTH (1080)
-#define WINDOW_HEIGHT (1080)
+#define WINDOW_WIDTH (1440)
+#define WINDOW_HEIGHT (1440)
 
 SDL_Window* Window;
 SDL_Renderer* Rend;
@@ -14,6 +14,8 @@ SDL_Texture* Black_tex;
 SDL_Texture* White_tex;
 SDL_Rect Blacks[12];
 SDL_Rect Whites[12];
+
+int grid[9];
 
 struct Pos{
     int x;
@@ -50,12 +52,17 @@ void init(){
     }
 
     // Precomputes the locations on the board for easy access and use
-    int start = WINDOW_HEIGHT / 16, inc = WINDOW_HEIGHT / 8;
-    
-    for(int i = 0; i < 8; i++){
-        for(int j = 0; j < 8; j++){
-            pos[i][j].x = start + j * inc;
-            pos[i][j].y = WINDOW_HEIGHT - start - (7 - i) * inc;
+    int inc = WINDOW_HEIGHT / 8;
+    int i, j;
+
+    for(i = 0; i < 9; i++){
+        grid[i] = i * inc;
+    }
+
+    for(i = 0; i < 8; i++){
+        for(j = 0; j < 8; j++){
+            pos[i][j].x = (grid[j] + grid[j + 1]) / 2;
+            pos[i][j].y = (grid[i] + grid[i + 1]) / 2;
         }
     }
 }
@@ -101,18 +108,18 @@ void makeBlack(){
     }
 
     for(i = 0; i < 12; i++){
-        Blacks[i].w = WINDOW_HEIGHT / 8;
-        Blacks[i].h = WINDOW_HEIGHT / 8;
         SDL_QueryTexture(Black_tex, NULL, NULL, &Blacks[i].w, &Blacks[i].h);
+        Blacks[i].w = WINDOW_WIDTH / 9;
+        Blacks[i].h = WINDOW_HEIGHT / 9;
     }
 
     for(i = 0; i < 4; i++){
-        Blacks[i].x = pos[7][i * 2].x;
-        Blacks[i].y = pos[7][i].y;
-        Blacks[i + 8].x = pos[5][i * 2].x;
-        Blacks[i + 8].y = pos[5][i].y;
-        Blacks[i + 4].x = pos[6][1 + i * 2].x;
-        Blacks[i + 4].y = pos[6][i].y;
+        Blacks[i].x = pos[7][i * 2].x - Blacks[i].w / 2;
+        Blacks[i].y = pos[7][i].y - Blacks[i].h / 2;
+        Blacks[i + 8].x = pos[5][i * 2].x - Blacks[i].w / 2;
+        Blacks[i + 8].y = pos[5][i].y - Blacks[i].h / 2;
+        Blacks[i + 4].x = pos[6][1 + i * 2].x - Blacks[i].w / 2;
+        Blacks[i + 4].y = pos[6][i].y - Blacks[i].h / 2;
     }
 }
 
@@ -132,18 +139,18 @@ void makeWhite(){
     }
 
     for(i = 0; i < 12; i++){
-        Whites[i].w = 135;
-        Whites[i].h = WINDOW_HEIGHT / 8;
         SDL_QueryTexture(White_tex, NULL, NULL, &Whites[i].w, &Whites[i].h);
+        Whites[i].w = WINDOW_WIDTH / 9;
+        Whites[i].h = WINDOW_HEIGHT / 9;
     }
 
     for(i = 0; i < 4; i++){
-        Whites[i].x = pos[0][1 + i * 2].x;
-        Whites[i].y = pos[0][i].y;
-        Whites[i + 8].x = pos[2][1 + i * 2].x;
-        Whites[i + 8].y = pos[2][i].y;
-        Whites[i + 4].x = pos[1][i * 2].x;
-        Whites[i + 4].y = pos[1][i].y;
+        Whites[i].x = pos[0][1 + i * 2].x - Whites[i].w / 2;
+        Whites[i].y = pos[0][i].y - Whites[i].h / 2;
+        Whites[i + 8].x = pos[2][1 + i * 2].x - Whites[i].w / 2;
+        Whites[i + 8].y = pos[2][i].y - Whites[i].h / 2;
+        Whites[i + 4].x = pos[1][i * 2].x - Whites[i].w / 2;
+        Whites[i + 4].y = pos[1][i].y - Whites[i].h / 2;
     }
 }
 
@@ -189,7 +196,7 @@ int main(void)
 
     display();
 
-    SDL_Delay(5000);
+    SDL_Delay(15000);
 
     destroy();
 }
