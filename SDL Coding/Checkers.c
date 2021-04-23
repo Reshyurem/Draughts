@@ -16,6 +16,8 @@ SDL_Texture* White_tex;
 SDL_Rect Blacks[12];
 SDL_Rect Whites[12];
 
+int turn = 0;
+
 int grid[9];
 
 struct Pos{
@@ -173,12 +175,15 @@ void display(){
 }
 
 void move(int PieceNo, int BlackorWhite, int x, int y){
+    // Values to be used for calculating position and relative postion and movement for the pieces
     int x_pos, y_pos, x_final, y_final, distx, disty;
+
+    // Chooses which Color Piece to move
     if(BlackorWhite == 0){
         x_pos = Blacks[PieceNo].x;
         y_pos = Blacks[PieceNo].y;
-        x_final = pos[x][y].x - Blacks[PieceNo].w / 2;
-        y_final = pos[x][y].y - Blacks[PieceNo].h / 2;
+        x_final = pos[y][x].x - Blacks[PieceNo].w / 2;
+        y_final = pos[y][x].y - Blacks[PieceNo].h / 2;
 
         distx = (x_final - x_pos) / 60;                 // Amount to move by in x direction
         disty = (y_final - y_pos) / 60;                 // Amount to move by in y direction
@@ -196,8 +201,8 @@ void move(int PieceNo, int BlackorWhite, int x, int y){
     else{
         x_pos = Whites[PieceNo].x;
         y_pos = Whites[PieceNo].y;
-        x_final = pos[x][y].x - Whites[PieceNo].w / 2;
-        y_final = pos[x][y].y - Whites[PieceNo].h / 2;
+        x_final = pos[y][x].x - Whites[PieceNo].w / 2;
+        y_final = pos[y][x].y - Whites[PieceNo].h / 2;
 
         distx = (x_final - x_pos) / 60;                 // Amount to move by in x direction
         disty = (y_final - y_pos) / 60;                 // Amount to move by in y direction
@@ -228,17 +233,59 @@ void destroy(){
     SDL_Quit();
 }
 
-int main(void)
-{
+int bs(int element){            //Not Working, need to debug
+    int beg = 0, end = 7;
+    int mid = (beg + end) / 2;
+
+    while(beg <= end){
+        if(element > grid[mid] && element < grid[mid + 1])
+            return mid;
+
+        else if(element < grid[mid])
+            end = mid;
+        
+        else if(element > grid[mid + 1])
+            beg = mid + 1;
+
+        mid = (beg + end) / 2;
+    }
+    return mid;
+}
+
+void select(int mouse_x, int mouse_y, int* select_x, int* select_y){
+    *select_x = bs(mouse_x);
+    *select_y = bs(mouse_y);
+    printf("%d %d\n", *select_x, *select_y);
+}
+
+void process(){
+    int close_req = 0, mouse_x, mouse_y, button, select_x, select_y;
+
     init();
 
     makeBG();
     makeBlack();
     makeWhite();
 
-    display();
-    move(11, 0, 3, 4);
-    SDL_Delay(15000);
-
+    while(!close_req){
+        // Checking events
+        SDL_Event event;
+        while(SDL_PollEvent(&event)){
+            if(event.type == SDL_QUIT){
+                close_req = 1;
+            }
+        }
+        button = SDL_GetMouseState(&mouse_x, &mouse_y);
+        if(button & SDL_BUTTON(SDL_BUTTON_LEFT)){
+            select(mouse_x, mouse_y, &select_x, &select_y);
+        }
+        display();
+        move(11, 0, 4, 3);
+    }
     destroy();
+}
+
+int main(void)
+{
+    process();
 }
