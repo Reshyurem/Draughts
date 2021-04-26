@@ -36,10 +36,15 @@ int main()
 #include <stdlib.h>
 #include <stdbool.h>
 
+int noofwhitepieces = 12; // Keeps track of the number of white and black pieces
+int noofblackpieces = 12;
+
 struct cell__
 {
-    char piece; //O for white, X for black
-    char type;  // K for king , N for normal
+    char piece;
+    // O for white, K for white king
+    // X for black, Q for black king
+    char type; // K for king , N for normal
 };
 typedef struct cell__ Cell;
 
@@ -71,15 +76,24 @@ void intializeboard(Cell grid[8][8])
             {
                 grid[i][j].piece = 'O';
                 grid[i][j].type = 'N';
-            }    
+            }
             else
+            {
                 grid[i][j].piece = ' ';
-                
+                grid[i][j].type = ' ';
+            }
         }
     }
+
+    //MIDDLE
     for (int i = 3; i < 5; i++)
+    {
         for (int j = 0; j < 8; j++)
+        {
             grid[i][j].piece = ' ';
+            grid[i][j].type = ' ';
+        }
+    }
 
     //BLACK
     for (int i = 5; i < 8; i++)
@@ -90,26 +104,89 @@ void intializeboard(Cell grid[8][8])
             {
                 grid[i][j].piece = 'X';
                 grid[i][j].type = 'N';
-            }                
+            }
             else
+            {
                 grid[i][j].piece = ' ';
+                grid[i][j].type = ' ';
+            }
         }
     }
 }
 
-int input(Cell grid[8][8], bool turn) // turn 0 white(O), 1 black(X)
+void takepiece(Cell grid[8][8], int direction, int Y, int X) // Coordinate of the attacking piece
+{
+    //0 top left
+    //1 top right
+    //2 bottom right
+    //3 bottom left
+    switch (direction)
+    {
+    case 0: //top left
+        grid[Y - 2][X - 2].piece = grid[Y][X].piece; // Moves the piece
+        grid[Y - 2][X - 2].type = grid[Y][X].type;
+        grid[Y][X].piece = ' '; // Empties the original place
+        grid[Y][X].type = ' ';
+        //checks which colour the opposite piece is and decreases the noofpieces global variable
+        if (grid[Y - 1][X - 1].piece == 'O' || grid[Y - 1][X - 1].piece == 'K')
+            noofwhitepieces--;
+        else
+            noofblackpieces--;
+        grid[Y - 1][X - 1].piece = ' '; // Deletes the opposite piece
+        grid[Y - 1][X - 1].type = ' ';
+
+    case 1: //top right
+        grid[Y - 2][X + 2].piece = grid[Y][X].piece;
+        grid[Y - 2][X + 2].type = grid[Y][X].type;
+        grid[Y][X].piece = ' ';
+        grid[Y][X].type = ' ';
+        if (grid[Y - 1][X + 1].piece == 'O' || grid[Y - 1][X + 1].piece == 'K')
+            noofwhitepieces--;
+        else
+            noofblackpieces--;
+        grid[Y - 1][X + 1].piece = ' ';
+        grid[Y - 1][X + 1].type = ' ';
+
+    case 2: //bottom right
+        grid[Y + 2][X + 2].piece = grid[Y][X].piece;
+        grid[Y + 2][X + 2].type = grid[Y][X].type;
+        grid[Y][X].piece = ' ';
+        grid[Y][X].type = ' ';
+        if (grid[Y + 1][X + 1].piece == 'O' || grid[Y + 1][X + 1].piece == 'K')
+            noofwhitepieces--;
+        else
+            noofblackpieces--;
+        grid[Y + 1][X + 1].piece = ' ';
+        grid[Y + 1][X + 1].type = ' ';
+
+    case 3: //bottom left
+        grid[Y + 2][X - 2].piece = grid[Y][X].piece;
+        grid[Y + 2][X - 2].type = grid[Y][X].type;
+        grid[Y][X].piece = ' ';
+        grid[Y][X].type = ' ';
+        if (grid[Y + 1][X - 1].piece == 'O' || grid[Y + 1][X - 1].piece == 'K')
+            noofwhitepieces--;
+        else
+            noofblackpieces--;
+        grid[Y + 1][X - 1].piece = ' ';
+        grid[Y + 1][X - 1].type = ' ';
+    }
+}
+
+int input(Cell grid[8][8], bool turn) // turn 1 white(O,K), 0 black(X,Q)
 {
     char letter;
     int X, Y;
     printf("Enter the position of the piece which you wish to move: ");
     scanf("%c", &letter);
     scanf("%d", &Y);
-    X = letter - '0';
+    X = letter - '0'; //j index of grid
+    Y = Y - 1;        //i index of grid
 
     if (X >= 8 || Y >= 8 || X < 0 || Y < 0)
         return -1;
 
-    if (!turn)
+    if (turn)
     {
         if (grid[Y][X].piece != 'O')
             return -1;
@@ -120,21 +197,41 @@ int input(Cell grid[8][8], bool turn) // turn 0 white(O), 1 black(X)
             return -1;
     }
 
-    printf("1) Move to upper left   2) Move to upper right\n 3) Move to lower left  4) Move to lower right\n");
-    int inp;
-    scanf("%d", &inp);
-    switch (inp)
+
+    if (grid[Y][X].type == 'N') // Checks for the type of the piece(normal or king)
     {
-    case 1:
-        if(X == 0 || Y == 0)
-            printf("Can't move piece there.");
-            return -1;
+        if (grid[Y][X].piece == 'O') // Checks if white or black as direction of movement is different
+        {
+            if (X <= 6 && Y <= 6 && grid[Y + 1][X + 1].piece == ' ')
+                printf("1) Move forward left\n");
+            else if (X <= 5 && Y <= 5 && grid[Y + 2][X + 2].piece == ' ')
+                printf("2) Take piece on forward left\n");
 
+            if (X >= 1 && Y <= 6 && grid[Y + 1][X - 1].piece == ' ')
+                printf("3) Move forward right\n");
+            else if (X >= 2 && Y <= 5 && grid[Y + 2][X - 2].piece == ' ')
+                printf("4) Take piece on forward right\n");
+        }
+        else //black
+        {
+            if (X >= 1 && Y >= 1 && grid[Y - 1][X - 1].piece == ' ')
+                printf("1) Move forward left\n");
+            else if (X >= 2 && Y >= 2 && grid[Y - 2][X - 2].piece == ' ')
+                printf("2) Take piece on forward left\n");
 
-    case 2:        
+            if (X <= 6 && Y >= 1 && grid[Y - 1][X + 1].piece == ' ')
+                printf("3) Move forward right\n");
+            else if (X <= 5 && Y >= 2 && grid[Y - 2][X + 2].piece == ' ')
+                printf("4) Take piece on forward right\n");
+        }
     }
+    else
+    {
+    }
+    int inp;
+    printf("Enter the number corresponding to the move you wish to make:");
+    scanf("%d", &inp);
 }
-
 
 int main()
 {
