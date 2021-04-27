@@ -1,11 +1,11 @@
-/*#include <stdio.h>
+#include <stdio.h>
 #include <math.h>
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_timer.h>
 #include <SDL2/SDL_image.h>
 
-#define WINDOW_WIDTH (1440)
-#define WINDOW_HEIGHT (1440)
+#define WINDOW_WIDTH (960)
+#define WINDOW_HEIGHT (960)
 
 SDL_Window* Window;
 SDL_Renderer* Rend;
@@ -23,6 +23,7 @@ int grid[9];
 struct Pos{
     int x;
     int y;
+    int BlackorWhite;
 }pos[8][8];
 
 void init(){
@@ -68,6 +69,14 @@ void init(){
             pos[i][j].y = (grid[i] + grid[i + 1]) / 2;
         }
     }
+    for (i = 1; i < 8; i++)
+        for (j = 0; j < 8; j++)
+        {
+            if ((i + j) % 2 == 0)
+                pos[i][j].BlackorWhite = 0;
+            else
+                pos[i][j].BlackorWhite = 1;
+        }
 }
 
 void makeBG(){
@@ -297,7 +306,8 @@ void process(){
 int main(void)
 {
     process();
-}*/
+}
+/*
 #include <stdio.h>
 #include <math.h>
 #include <SDL2/SDL.h>
@@ -374,14 +384,6 @@ void init()
             pos[i][j].y = (grid[i] + grid[i + 1]) / 2;
         }
     }
-    for (i = 1; i < 8; i++)
-        for (j = 0; j < 8; j++)
-        {
-            if ((i + j) % 2 == 0)
-                pos[i][j].BlackorWhite = 0;
-            else
-                pos[i][j].BlackorWhite = 1;
-        }
 }
 
 void makeBG()
@@ -674,4 +676,4 @@ void process()
 int main(void)
 {
     process();
-}
+}*/
