@@ -190,6 +190,44 @@ void display(){
     SDL_RenderPresent(Rend);
 }
 
+void displayTintBlack(int x, int y)
+{
+    int i,j;
+    Uint8 r = 210, b = 175, g = 175;
+    // Clear the Window
+    SDL_RenderClear(Rend);
+    // Write all image to the window
+    SDL_RenderCopy(Rend, Bg, NULL, NULL);
+    for (i = 0; i < 12; i++)
+    {
+        SDL_SetTextureColorMod(Black_tex, r,g,b);
+        SDL_RenderCopy(Rend, Black_tex, NULL, &Blacks[i]);
+        SDL_RenderCopy(Rend, White_tex, NULL, &Whites[i]);
+    }
+    // Upload Render to the Window
+    SDL_RenderPresent(Rend);
+}
+
+void displayTintWhite(int x, int y)
+{
+    int i;
+    Uint8 r = 210, b = 175, g = 175;
+    // Clear the Window
+    SDL_RenderClear(Rend);
+    // Write all image to the window
+    SDL_RenderCopy(Rend, Bg, NULL, NULL);
+    for (i = 0; i < 12; i++)
+    {
+        //SDL_GetTextureColorMod(Black_tex, &r, &g, &b);
+        SDL_SetTextureColorMod(White_tex, r, g, b);
+        SDL_RenderCopy(Rend, Black_tex, NULL, &Blacks[i]);
+        SDL_RenderCopy(Rend, White_tex, NULL, &Whites[i]);
+    }
+    //SDL_GetTextureColorMod(Black_tex, &r, &g, &b);
+    //SDL_SetTextureColorMod(Black_tex, r, g, b);
+    // Upload Render to the Window
+    SDL_RenderPresent(Rend);
+}
 void move(int PieceNo, int BlackorWhite, int x, int y){
     // Values to be used for calculating position and relative postion and movement for the pieces
     int x_pos, y_pos, x_final, y_final, distx, disty;
@@ -210,7 +248,8 @@ void move(int PieceNo, int BlackorWhite, int x, int y){
 
             Blacks[PieceNo].x = x_pos;
             Blacks[PieceNo].y = y_pos;
-            display();
+            displayTintBlack(x,y);
+            //display();
             SDL_Delay(500 / 60);
         }
     }
@@ -228,7 +267,8 @@ void move(int PieceNo, int BlackorWhite, int x, int y){
             y_pos += disty;
             Whites[PieceNo].x = x_pos;
             Whites[PieceNo].y = y_pos;
-            display();
+            displayTintWhite(x,y);
+            //display();
             SDL_Delay(500 / 60);
         }
     }
