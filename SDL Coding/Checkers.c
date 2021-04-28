@@ -332,7 +332,7 @@ void move(int pieceNo, int color, int x, int y)
         }
         uswapPos(&pos[curry][currx], &pos[y][x]);
     }
-    else
+    else if(color == 1)
     {
         select(Whites[pieceNo].x, Whites[pieceNo].y, &currx, &curry);
         x_pos = Whites[pieceNo].x;
@@ -343,7 +343,7 @@ void move(int pieceNo, int color, int x, int y)
         distx = (x_final - x_pos) / 60; // Amount to move by in x direction
         disty = (y_final - y_pos) / 60; // Amount to move by in y direction
 
-        while (x_pos != x_final && y_pos != y_final)
+        while (x_pos != x_final || y_pos != y_final)
         {
             x_pos += distx;
             y_pos += disty;
