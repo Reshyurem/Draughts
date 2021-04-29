@@ -27,18 +27,16 @@ int toss()
     int toss = rand() % 2;
 
     if (toss == 0)
-    {       
+    {
+        printf("BLACK HAS WON THE TOSS!\n");
         return 0;
-        printf("IT IS BLACK'S TURN FIRST\n");
     }
     else
     {
+        printf("WHITE HAS WON THE TOSS!\n");
         return 1;
-        printf("IT IS WHITE'S TURN FIRST!\n");
     }
-
 }
-
 
 void display(Cell grid[8][8])
 {
@@ -219,7 +217,10 @@ void movepiece(Cell grid[8][8], int direction, int Y, int X)
 
     case 3: // bottom left
         grid[Y + 1][X - 1].piece = grid[Y][X].piece;
-        grid[Y + 1][X - 1].typrintf("IT IS WHITE'S TURN FIRST!\n");].piece = 'O' && Y == 6) // Checking if can be made king
+        grid[Y + 1][X - 1].type = grid[Y][X].type;
+        grid[Y][X].piece = ' ';
+        grid[Y][X].type = ' ';
+        if (grid[Y + 1][X - 1].piece = 'O' && Y == 6) // Checking if can be made king
         {
             grid[Y + 1][X - 1].piece = 'W'; // Turns white normal piece(O) into black king(W)
             grid[Y + 1][X - 1].type = 'K';
@@ -231,174 +232,273 @@ void movepiece(Cell grid[8][8], int direction, int Y, int X)
     }
 }
 
-int input(Cell grid[8][8], bool turn) // turn 1 white(O,W), 0 black(X,B)
+int input(Cell grid[8][8], int turn) // turn 1 white(O,W), 0 black(X,B)
 {
     char letter;
     int X, Y;
     printf("Enter the position of the piece which you wish to move: ");
     scanf("%c", &letter);
     scanf("%d", &Y);
-    X = letter - '0'; //j index of grid
+    X = letter - 'A'; //j index of grid
     Y = Y - 1;        //i index of grid
 
     if (X >= 8 || Y >= 8 || X < 0 || Y < 0)
         return -1;
-
     if (turn)
     {
-        if (grid[Y][X].piece != 'O')
+        if (grid[Y][X].piece != 'O' || grid[Y][X].piece != 'W')
             return -1;
     }
     else
     {
-        if (grid[Y][X].piece != 'X')
+        if (grid[Y][X].piece != 'X' || grid[Y][X].piece != 'B')
             return -1;
     }
 
+    int inp[9] = {0};
+    int flag = 0;
     int input;
     if (grid[Y][X].piece == 'O') // Checks if white or black as direction of movement is different
     {
         if (X <= 6 && Y <= 6 && grid[Y + 1][X + 1].piece == ' ')
+        {
             printf("1) Move bottom right\n");
+            inp[1] = 1;
+            flag = 1;
+        }
+
         else if (X <= 5 && Y <= 5 && (grid[Y + 1][X + 1].piece == 'X' || grid[Y + 1][X + 1].piece == 'B') && grid[Y + 2][X + 2].piece == ' ')
+        {
             printf("2) Take piece on bottom right\n");
+            inp[2] = 1;
+            flag = 1;
+        }
 
         if (X >= 1 && Y <= 6 && grid[Y + 1][X - 1].piece == ' ')
-            printf("3) Move bottom left\n");
-        else if (X >= 2 && Y <= 5 && (grid[Y + 1][X - 1].piece == 'X' || grid[Y + 1][X - 1].piece == 'B') && grid[Y + 2][X - 2].piece == ' ')
-            printf("4) Take piece on bottom left\n");
+        {
 
+            printf("3) Move bottom left\n");
+            inp[3] = 1;
+            flag = 1;
+        }
+        else if (X >= 2 && Y <= 5 && (grid[Y + 1][X - 1].piece == 'X' || grid[Y + 1][X - 1].piece == 'B') && grid[Y + 2][X - 2].piece == ' ')
+        {
+            printf("4) Take piece on bottom left\n");
+            inp[4] = 1;
+            flag = 1;
+        }
         if (grid[Y][X].type == 'K')
         {
             if (X >= 1 && Y >= 1 && grid[Y - 1][X - 1].piece == ' ')
+            {
                 printf("5) Move top left\n");
+                inp[5] = 1;
+                flag = 1;
+            }
             else if (X >= 2 && Y >= 2 && (grid[Y - 1][X - 1].piece == 'X' || grid[Y - 1][X - 1].piece == 'B') && grid[Y - 2][X - 2].piece == ' ')
+            {
                 printf("6) Take piece on top left\n");
-
+                inp[6] = 1;
+                flag = 1;
+            }
             if (X <= 6 && Y >= 1 && grid[Y - 1][X + 1].piece == ' ')
+            {
                 printf("7) Move top right\n");
+                inp[7] = 1;
+                flag = 1;
+            }
             else if (X <= 5 && Y >= 2 && (grid[Y - 1][X + 1].piece == 'X' || grid[Y - 1][X + 1].piece == 'B') && grid[Y - 2][X + 2].piece == ' ')
+            {
                 printf("8) Take piece on top right\n");
+                inp[8] = 1;
+                flag = 1;
+            }
         }
+        if (!flag)
+            return -1;
         scanf("%d", &input);
-        switch (input)
+        if (inp[input] == 1)
         {
-        case 1:
-            movepiece(grid, 2, Y, X);
-            break;
+            switch (input)
+            {
+            case 1:
+                movepiece(grid, 2, Y, X);
+                break;
 
-        case 2:
-            takepiece(grid, 2, Y, X);
-            break;
+            case 2:
+                takepiece(grid, 2, Y, X);
+                break;
 
-        case 3:
-            movepiece(grid, 3, Y, X);
-            break;
+            case 3:
+                movepiece(grid, 3, Y, X);
+                break;
 
-        case 4:
-            takepiece(grid, 3, Y, X);
-            break;
+            case 4:
+                takepiece(grid, 3, Y, X);
+                break;
 
-        case 5:
-            movepiece(grid, 0, Y, X);
-            break;
+            case 5:
+                movepiece(grid, 0, Y, X);
+                break;
 
-        case 6:
-            takepiece(grid, 0, Y, X);
-            break;
+            case 6:
+                takepiece(grid, 0, Y, X);
+                break;
 
-        case 7:
-            movepiece(grid, 1, Y, X);
-            break;
+            case 7:
+                movepiece(grid, 1, Y, X);
+                break;
 
-        case 8:
-            takepiece(grid, 1, Y, X);
-            break;
+            case 8:
+                takepiece(grid, 1, Y, X);
+                break;
 
-        default:
-            break;
+            default:
+                break;
+            }
         }
+        else
+            return -1;
     }
     else //black
     {
         if (X >= 1 && Y >= 1 && grid[Y - 1][X - 1].piece == ' ')
+        {
             printf("1) Move top left\n");
+            inp[1] = 1;
+            flag = 1;
+        }
         else if (X >= 2 && Y >= 2 && (grid[Y - 1][X - 1].piece == 'O' || grid[Y - 1][X - 1].piece == 'W') && grid[Y - 2][X - 2].piece == ' ')
+        {
             printf("2) Take piece on top left\n");
-
+            inp[2] = 1;
+            flag = 1;
+        }
         if (X <= 6 && Y >= 1 && grid[Y - 1][X + 1].piece == ' ')
+        {
             printf("3) Move top right\n");
+            inp[3] = 1;
+            flag = 1;
+        }
         else if (X <= 5 && Y >= 2 && (grid[Y - 1][X + 1].piece == 'O' || grid[Y - 1][X + 1].piece == 'W') && grid[Y - 2][X + 2].piece == ' ')
+        {
             printf("4) Take piece on top right\n");
+            inp[4] = 1;
+            flag = 1;
+        }
 
         if (grid[Y][X].type == 'K')
         {
             if (X <= 6 && Y <= 6 && grid[Y + 1][X + 1].piece == ' ')
+            {
                 printf("5) Move bottom right\n");
+                inp[5] = 1;
+                flag = 1;
+            }
+
             else if (X <= 5 && Y <= 5 && (grid[Y + 1][X + 1].piece == 'O' || grid[Y + 1][X + 1].piece == 'W') && grid[Y + 2][X + 2].piece == ' ')
+            {
                 printf("6) Take piece on bottom right\n");
-
+                inp[6] = 1;
+                flag = 1;
+            }
             if (X >= 1 && Y <= 6 && grid[Y + 1][X - 1].piece == ' ')
+            {
                 printf("7) Move bottom left\n");
+                inp[7] = 1;
+                flag = 1;
+            }
             else if (X >= 2 && Y <= 5 && (grid[Y + 1][X - 1].piece == 'O' || grid[Y + 1][X - 1].piece == 'W') && grid[Y + 2][X - 2].piece == ' ')
+            {
                 printf("8) Take piece on bottom left\n");
+                inp[8] = 1;
+                flag = 1;
+            }
         }
-
+        if (!flag)
+            return -1;
         scanf("%d", &input);
-        switch (input)
+        if (inp[input] == 1)
         {
-        case 1:
-            movepiece(grid, 0, Y, X);
-            break;
+            switch (input)
+            {
+            case 1:
+                movepiece(grid, 0, Y, X);
+                break;
 
-        case 2:
-            takepiece(grid, 0, Y, X);
-            break;
+            case 2:
+                takepiece(grid, 0, Y, X);
+                break;
 
-        case 3:
-            movepiece(grid, 1, Y, X);
-            break;
+            case 3:
+                movepiece(grid, 1, Y, X);
+                break;
 
-        case 4:
-            takepiece(grid, 1, Y, X);
-            break;
-        case 5:
-            movepiece(grid, 2, Y, X);
-            break;
+            case 4:
+                takepiece(grid, 1, Y, X);
+                break;
+            case 5:
+                movepiece(grid, 2, Y, X);
+                break;
 
-        case 6:
-            takepiece(grid, 2, Y, X);
-            break;
+            case 6:
+                takepiece(grid, 2, Y, X);
+                break;
 
-        case 7:
-            movepiece(grid, 3, Y, X);
-            break;
+            case 7:
+                movepiece(grid, 3, Y, X);
+                break;
 
-        case 8:
-            takepiece(grid, 3, Y, X);
-            break;
+            case 8:
+                takepiece(grid, 3, Y, X);
+                break;
 
-        default:
-            break;
+            default:
+                break;
+            }
         }
+        else
+            return -1;
     }
+    return 0;
 }
 
-
 int main()
-{   
+{
     srand(time(NULL));
     Cell grid[8][8];
     intializeboard(grid);
     display(grid);
-    int turn = toss();// 1 for white, 0 for black
-    for(;;)
+    int turn = toss(); // 1 for white, 0 for black
+    for (;;)
     {
-        if(input(grid, turn) == -1)
-            input(grid, turn);
-        else   
-            turn 
-    }
+        if (noofblackpieces == 0) //Winning condition
+        {
+            printf("WHITE HAS WON THE GAME!\n");
+            break;
+        }
+        else if (noofwhitepieces == 0)
+        {
+            printf("BLACK HAS WON THE GAME!\n");
+            break;
+        }
+        if (turn)
+            printf("WHITE'S TURN\n");
+        else
+            printf("BLACK'S TURN\n");
 
+        if (input(grid, turn) == -1)
+            printf("INVALID MOVE, IT IS AGAIN ");
+        else
+        {
+            // Stalemate checking function with winning function
+            if (turn)
+                turn = 0;
+            else
+                turn = 1;
+            clrscr();
+            display(grid);
+        }
+    }
     return 0;
 }
