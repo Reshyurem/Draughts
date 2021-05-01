@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <time.h>
+#include <ctype.h>
 
 #ifdef _WIN32
 #include <conio.h>
@@ -124,6 +125,11 @@ void takepiece(Cell grid[8][8], int direction, int Y, int X) // Coordinate of th
             noofblackpieces--;
         grid[Y - 1][X - 1].piece = ' '; // Deletes the opposite piece
         grid[Y - 1][X - 1].type = ' ';
+        if (grid[Y - 2][X + 2].piece == 'X' && Y == 2) // Checking if can be made king
+        {
+            grid[Y - 2][X + 2].piece = 'B'; // Turns black normal piece(X) into black king(B)
+            grid[Y - 2][X + 2].type = 'K';
+        }
         break;
 
     case 1: //top right
@@ -137,6 +143,11 @@ void takepiece(Cell grid[8][8], int direction, int Y, int X) // Coordinate of th
             noofblackpieces--;
         grid[Y - 1][X + 1].piece = ' ';
         grid[Y - 1][X + 1].type = ' ';
+        if (grid[Y - 2][X + 2].piece == 'X' && Y == 2) // Checking if can be made king
+        {
+            grid[Y - 2][X + 2].piece = 'B'; // Turns black normal piece(X) into black king(B)
+            grid[Y - 2][X + 2].type = 'K';
+        }
         break;
 
     case 2: //bottom right
@@ -150,6 +161,11 @@ void takepiece(Cell grid[8][8], int direction, int Y, int X) // Coordinate of th
             noofblackpieces--;
         grid[Y + 1][X + 1].piece = ' ';
         grid[Y + 1][X + 1].type = ' ';
+        if (grid[Y + 2][X + 2].piece == 'O' && Y == 5) // Checking if can be made king
+        {
+            grid[Y + 2][X + 2].piece = 'W'; // Turns white normal piece(O) into white king(W)
+            grid[Y + 2][X + 2].type = 'K';
+        }
         break;
 
     case 3: //bottom left
@@ -163,6 +179,11 @@ void takepiece(Cell grid[8][8], int direction, int Y, int X) // Coordinate of th
             noofblackpieces--;
         grid[Y + 1][X - 1].piece = ' ';
         grid[Y + 1][X - 1].type = ' ';
+        if (grid[Y + 2][X - 2].piece == 'O' && Y == 5) // Checking if can be made king
+        {
+            grid[Y + 2][X - 2].piece = 'W'; // Turns white normal piece(O) into white king(W)
+            grid[Y + 2][X - 2].type = 'K';
+        }
         break;
 
     default:
@@ -208,9 +229,9 @@ void movepiece(Cell grid[8][8], int direction, int Y, int X)
         grid[Y + 1][X + 1].type = grid[Y][X].type;
         grid[Y][X].piece = ' ';
         grid[Y][X].type = ' ';                        // Movement complete
-        if (grid[Y + 1][X + 1].piece = 'O' && Y == 6) // Checking if can be made king
+        if (grid[Y + 1][X + 1].piece == 'O' && Y == 6) // Checking if can be made king
         {
-            grid[Y + 1][X + 1].piece = 'W'; // Turns white normal piece(O) into black king(W)
+            grid[Y + 1][X + 1].piece = 'W'; // Turns white normal piece(O) into white king(W)
             grid[Y + 1][X + 1].type = 'K';
         }
         break;
@@ -220,9 +241,9 @@ void movepiece(Cell grid[8][8], int direction, int Y, int X)
         grid[Y + 1][X - 1].type = grid[Y][X].type;
         grid[Y][X].piece = ' ';
         grid[Y][X].type = ' ';
-        if (grid[Y + 1][X - 1].piece = 'O' && Y == 6) // Checking if can be made king
+        if (grid[Y + 1][X - 1].piece == 'O' && Y == 6) // Checking if can be made king
         {
-            grid[Y + 1][X - 1].piece = 'W'; // Turns white normal piece(O) into black king(W)
+            grid[Y + 1][X - 1].piece = 'W'; // Turns white normal piece(O) into white king(W)
             grid[Y + 1][X - 1].type = 'K';
         }
         break;
@@ -237,21 +258,24 @@ int input(Cell grid[8][8], int turn) // turn 1 white(O,W), 0 black(X,B)
     char letter;
     int X, Y;
     printf("Enter the position of the piece which you wish to move: ");
+    scanf("%d", &Y);            //Scan number first since it will help avoid buffer problems
     scanf("%c", &letter);
-    scanf("%d", &Y);
+    letter = toupper(letter);
     X = letter - 'A'; //j index of grid
     Y = Y - 1;        //i index of grid
+
+    // printf("%d %d %c %c\n", X, Y, grid[Y][X].piece, grid[Y][X].type);
 
     if (X >= 8 || Y >= 8 || X < 0 || Y < 0)
         return -1;
     if (turn)
     {
-        if (grid[Y][X].piece != 'O' || grid[Y][X].piece != 'W')
+        if (grid[Y][X].piece != 'O' && grid[Y][X].piece != 'W')
             return -1;
     }
     else
     {
-        if (grid[Y][X].piece != 'X' || grid[Y][X].piece != 'B')
+        if (grid[Y][X].piece != 'X' && grid[Y][X].piece != 'B')
             return -1;
     }
 
