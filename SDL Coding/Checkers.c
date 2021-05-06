@@ -13,6 +13,8 @@ SDL_Surface *Surface;
 SDL_Texture *Bg;
 SDL_Texture *Black_tex;
 SDL_Texture *White_tex;
+SDL_Texture *Nothing;
+SDL_Rect Moves[4];
 SDL_Rect Blacks[12];
 SDL_Rect Whites[12];
 
@@ -27,6 +29,7 @@ struct Pos
     int color;
     int pieceNo;
     int King;
+    SDL_Rect* piece;
 } pos[8][8];
 
 void uswapPos(struct Pos *a, struct Pos *b)
@@ -41,6 +44,9 @@ void uswapPos(struct Pos *a, struct Pos *b)
     temp = a->King;
     a->King = b->King;
     b->King = temp;
+    SDL_Rect* t = a->piece;
+    a->piece = b->piece;
+    b->piece = t;
 }
 
 void init()
@@ -94,9 +100,10 @@ void init()
     {
         for (j = 0; j < 8; j++)
         {
-            pos[i][j].color = 2;
+            pos[i][j].color = -1;
             pos[i][j].King = 0;
-            pos[i][j].pieceNo = 0;
+            pos[i][j].pieceNo = -1;
+            pos[i][j].piece = NULL;
         }
     }
 }
@@ -127,10 +134,51 @@ void makeBG()
     }
 }
 
+void makeMoves()
+{
+    int i;
+    // load the image into memory using SDL_image library function
+    Surface = IMG_Load("resources/nothing.png");
+    if (!Surface)
+    {
+        printf("error creating surface\n");
+        SDL_DestroyRenderer(Rend);
+        SDL_DestroyWindow(Window);
+        SDL_Quit();
+        exit(1);
+    }
+
+    // load the image data into the graphics hardware's memory
+    Nothing = SDL_CreateTextureFromSurface(Rend, Surface);
+    SDL_FreeSurface(Surface);
+    if (!Nothing)
+    {
+        printf("error creating texture: %s\n", SDL_GetError());
+        SDL_DestroyRenderer(Rend);
+        SDL_DestroyWindow(Window);
+        SDL_Quit();
+        exit(1);
+    }
+
+    for(i = 0; i < 4; i++){
+        SDL_QueryTexture(Nothing, NULL,  NULL, &Moves[i].w, &Moves[i].h);
+        Moves[i].w = WINDOW_WIDTH / 9;
+        Moves[i].h = WINDOW_HEIGHT / 9;
+    }
+}
+
 void makeBlack()
 {
     Surface = IMG_Load("resources/black_piece.png");
     int i;
+    if (!Surface)
+    {
+        printf("error creating surface\n");
+        SDL_DestroyRenderer(Rend);
+        SDL_DestroyWindow(Window);
+        SDL_Quit();
+        exit(1);
+    }
 
     // load black piece image into memory
     Black_tex = SDL_CreateTextureFromSurface(Rend, Surface);
@@ -167,6 +215,9 @@ void makeBlack()
         pos[7][i * 2].pieceNo = i;
         pos[6][1 + i * 2].pieceNo = i + 4;
         pos[5][i * 2].pieceNo = i + 8;
+        pos[7][i * 2].piece = &Blacks[i];
+        pos[6][1 + i * 2].piece = &Blacks[i + 4];
+        pos[5][i * 2].piece = &Blacks[i + 8];
     }
 }
 
@@ -174,6 +225,14 @@ void makeWhite()
 {
     Surface = IMG_Load("resources/white_piece.png");
     int i;
+    if (!Surface)
+    {
+        printf("error creating surface\n");
+        SDL_DestroyRenderer(Rend);
+        SDL_DestroyWindow(Window);
+        SDL_Quit();
+        exit(1);
+    }
 
     // load black piece image into memory
     White_tex = SDL_CreateTextureFromSurface(Rend, Surface);
@@ -210,6 +269,9 @@ void makeWhite()
         pos[0][1 + i * 2].pieceNo = i;
         pos[1][i * 2].pieceNo = i + 4;
         pos[2][1 + i * 2].pieceNo = i + 8;
+        pos[0][1 + i * 2].piece = &Whites[i];
+        pos[1][i * 2].piece = &Whites[i + 4];
+        pos[2][1 + i * 2].piece = &Whites[i + 8];
     }
 }
 
@@ -299,8 +361,201 @@ void displayTint(int pieceNo, int color)
 }
 
 int validMove(int x, int y, int select_x, int select_y)
-{ // Needs to be changed to accomodate CLI version of the game
-    return 1;
+{
+    // Checking all take piece moves
+    if(select_x - x == 2 && y - select_y == 2 && select_y > -1 && select_y < 8 && select_x > -1 && select_x < 8){
+        if(pos[y - 1][x + 1].color != turn && pos[y - 1][x + 1].color != -1 && pos[select_y][select_x].pieceNo == -1){
+            return 1;
+        }
+    }
+    if(x - select_x == 2 && y - select_y == 2 && select_y > -1 && select_y < 8 && select_x > -1 && select_x < 8){
+        if(pos[y - 1][x - 1].color != turn && pos[y - 1][x - 1].color != -1 && pos[select_y][select_x].pieceNo == -1){
+            return 1;
+        }
+    }
+    if(select_x - x == 2 && select_y - y == 2 && select_y > -1 && select_y < 8 && select_x > -1 && select_x < 8){
+        if(pos[y + 1][x + 1].color != turn && pos[y + 1][x + 1].color != -1 && pos[select_y][select_x].pieceNo == -1){
+            return 1;
+        }
+    }
+    if(x - select_x == 2 && select_y - y == 2 && select_y > -1 && select_y < 8 && select_x > -1 && select_x < 8){
+        if(pos[y + 1][x - 1].color != turn && pos[y + 1][x - 1].color != -1 && pos[select_y][select_x].pieceNo == -1){
+            return 1;
+        }
+    }
+
+    // Checking all normal moves
+    if(select_x - x == 1 && y - select_y == 1 && select_y > -1 && select_y < 8 && select_x > -1 && select_x < 8){
+        if(pos[select_y][select_x].pieceNo == -1){
+            return 1;
+        }
+    }
+    if(x - select_x == 1 && y - select_y == 1 && select_y > -1 && select_y < 8 && select_x > -1 && select_x < 8){
+        if(pos[select_y][select_x].pieceNo == -1){
+            return 1;
+        }
+    }
+    if(select_x - x == 1 && select_y - y == 1 && select_y > -1 && select_y < 8 && select_x > -1 && select_x < 8){
+        if(pos[select_y][select_x].pieceNo == -1){
+            return 1;
+        }
+    }
+    if(x - select_x == 1 && select_y - y == 1 && select_y > -1 && select_y < 8 && select_x > -1 && select_x < 8){
+        if(pos[select_y][select_x].pieceNo == -1){
+            return 1;
+        }
+    }
+    return 0;
+}
+
+void findValidMoves(int valid[], int x, int y){
+    int flag = 1;
+    if(validMove(x, y, x - 2, y - 2) == 1){
+        valid[0] = 1;
+        flag = 0;
+    }
+    if(validMove(x, y, x + 2, y - 2) == 1){
+        valid[3] = 1;
+        flag = 0;
+    }
+    if(validMove(x, y, x - 2, y + 2) == 1){
+        valid[4] = 1;
+        flag = 0;
+    }
+    if(validMove(x, y, x + 2, y + 2) == 1){
+        valid[7] = 1;
+        flag = 0;
+    }
+    if(flag){
+        if(validMove(x, y, x - 1, y - 1) == 1){
+            valid[1] = 1;
+        }
+        if(validMove(x, y, x + 1, y - 1) == 1){
+            valid[2] = 1;
+        }
+        if(validMove(x, y, x - 1, y + 1) == 1){
+            valid[5] = 1;
+        }
+        if(validMove(x, y, x + 1, y + 1) == 1){
+            valid[6] = 1;
+        }
+    }
+}
+
+void displayValidMoves(int pieceNo, int color, int x, int y){
+    int validMoves[8] = { 0 }, i = 0;
+
+    // Clear the Window
+    SDL_RenderClear(Rend);
+
+    // Write all image to the window
+    if (turn == 0)
+        SDL_SetTextureColorMod(Bg, 220, 36, 36);
+    else if (turn == 1)
+        SDL_SetTextureColorMod(Bg, 74, 86, 157);
+    SDL_RenderCopy(Rend, Bg, NULL, NULL);
+    SDL_SetTextureColorMod(Bg, 255, 255, 255);
+
+    switch (color)
+    {
+    case 0:
+        for (i = 0; i < 12; i++)
+        {
+            if (i == pieceNo)
+                continue;
+            SDL_RenderCopy(Rend, Black_tex, NULL, &Blacks[i]);
+        }
+        for (i = 0; i < 12; i++)
+        {
+            SDL_RenderCopy(Rend, White_tex, NULL, &Whites[i]);
+        }
+        SDL_SetTextureColorMod(Black_tex, 52, 231, 238);
+        SDL_RenderCopy(Rend, Black_tex, NULL, &Blacks[pieceNo]);
+        SDL_SetTextureColorMod(Black_tex, 255, 255, 255);
+        break;
+    case 1:
+        for (i = 0; i < 12; i++)
+        {
+            if (i == pieceNo)
+                continue;
+            SDL_RenderCopy(Rend, White_tex, NULL, &Whites[i]);
+        }
+        for (i = 0; i < 12; i++)
+        {
+            SDL_RenderCopy(Rend, Black_tex, NULL, &Blacks[i]);
+        }
+        SDL_SetTextureColorMod(White_tex, 52, 231, 238);
+        SDL_RenderCopy(Rend, White_tex, NULL, &Whites[pieceNo]);
+        SDL_SetTextureColorMod(White_tex, 255, 255, 255);
+        break;
+    default:
+        for (i = 0; i < 12; i++)
+        {
+            SDL_RenderCopy(Rend, Black_tex, NULL, &Blacks[i]);
+            SDL_RenderCopy(Rend, White_tex, NULL, &Whites[i]);
+        }
+    }
+
+    i = 0;
+    findValidMoves(validMoves, x, y);
+    if(validMoves[0] || validMoves[3] || validMoves[4] || validMoves[7]){
+        SDL_SetTextureColorMod(Nothing, 255, 130, 53);
+        if(validMoves[0]){
+            Moves[i].x = pos[y - 2][x - 2].x - Moves[i].w / 2;
+            Moves[i].y = pos[y - 2][x - 2].y - Moves[i].h / 2;
+            SDL_RenderCopy(Rend, Nothing, NULL, &Moves[i]);
+            i++;
+        }
+        if(validMoves[3]){
+            Moves[i].x = pos[y - 2][x + 2].x - Moves[i].w / 2;
+            Moves[i].y = pos[y - 2][x + 2].y - Moves[i].h / 2;
+            SDL_RenderCopy(Rend, Nothing, NULL, &Moves[i]);
+            i++;
+        }
+        if(validMoves[4]){
+            Moves[i].x = pos[y + 2][x - 2].x - Moves[i].w / 2;
+            Moves[i].y = pos[y + 2][x - 2].y - Moves[i].h / 2;
+            SDL_RenderCopy(Rend, Nothing, NULL, &Moves[i]);
+            i++;
+        }
+        if(validMoves[7]){
+            Moves[i].x = pos[y + 2][x + 2].x - Moves[i].w / 2;
+            Moves[i].y = pos[y + 2][x + 2].y - Moves[i].h / 2;
+            SDL_RenderCopy(Rend, Nothing, NULL, &Moves[i]);
+            i++;
+        }
+        SDL_SetTextureColorMod(Nothing, 255, 255, 255);
+    }
+    else{
+        SDL_SetTextureColorMod(Nothing, 48, 232, 191);
+        if(validMoves[1]){
+            Moves[i].x = pos[y - 1][x - 1].x - Moves[i].w / 2;
+            Moves[i].y = pos[y - 1][x - 1].y - Moves[i].h / 2;
+            SDL_RenderCopy(Rend, Nothing, NULL, &Moves[i]);
+            i++;
+        }
+        if(validMoves[2]){
+            Moves[i].x = pos[y - 1][x + 1].x - Moves[i].w / 2;
+            Moves[i].y = pos[y - 1][x + 1].y - Moves[i].h / 2;
+            SDL_RenderCopy(Rend, Nothing, NULL, &Moves[i]);
+            i++;
+        }
+        if(validMoves[5]){
+            Moves[i].x = pos[y + 1][x - 1].x - Moves[i].w / 2;
+            Moves[i].y = pos[y + 1][x - 1].y - Moves[i].h / 2;
+            SDL_RenderCopy(Rend, Nothing, NULL, &Moves[i]);
+            i++;
+        }
+        if(validMoves[6]){
+            Moves[i].x = pos[y + 1][x + 1].x - Moves[i].w / 2;
+            Moves[i].y = pos[y + 1][x + 1].y - Moves[i].h / 2;
+            SDL_RenderCopy(Rend, Nothing, NULL, &Moves[i]);
+            i++;
+        }
+        SDL_SetTextureColorMod(Nothing, 255, 255, 255);
+    }
+    // Upload Render to the Window
+    SDL_RenderPresent(Rend);
 }
 
 void move(int pieceNo, int color, int x, int y)
@@ -398,16 +653,21 @@ void makemove(int x, int y)
                     {
                         undo = 1;
                     }
-                    else if (pos[select_y][select_x].color == 2 && validMove(x, y, select_x, select_y))
+                    else if (pos[select_y][select_x].color == -1 && validMove(x, y, select_x, select_y))
                     {
                         move(pos[y][x].pieceNo, pos[y][x].color, select_x, select_y);
+                        if(turn == 0)
+                            turn = 1;
+                        else if(turn == 1)
+                            turn = 0;
                         undo = 1;
                     }
                 }
                 break;
             }
         }
-        displayTint(pos[y][x].pieceNo, pos[y][x].color); // Refreshes the display
+        displayValidMoves(pos[y][x].pieceNo, pos[y][x].color, x, y);
+        // displayTint(pos[y][x].pieceNo, pos[y][x].color); // Refreshes the display
     }
 }
 
@@ -419,6 +679,7 @@ void process()
     init();
 
     makeBG();
+    makeMoves();
     makeBlack();
     makeWhite();
 
@@ -439,7 +700,7 @@ void process()
                 if (event.button.button == SDL_BUTTON_LEFT)
                 {                                                                 // Only true if the mouse is in the window and left button is clicked
                     select(event.button.x, event.button.y, &select_x, &select_y); // Assigns the row and column position mouse is currently in
-                    if (pos[select_y][select_x].color == 0 || pos[select_y][select_x].color == 1)
+                    if (pos[select_y][select_x].color == turn)
                     {
                         makemove(select_x, select_y);
                     }
