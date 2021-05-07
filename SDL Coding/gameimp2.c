@@ -28,7 +28,15 @@ struct cell__
     // O for white, W for white king
     // X for black, B for black king
     char type; // K for king , N for normal
+    int pieceNo;
 };
+
+struct Pos{
+    int x;
+    int y;
+};
+
+typedef struct Pos pos;
 typedef struct cell__ Cell;
 
 struct stackelem{
@@ -39,6 +47,8 @@ struct stackelem{
 };
 typedef struct stackelem Stackelem;
 typedef struct stackelem* Ptrtostackelem;
+
+pos Blacks[12], Whites[12];
 
 void stackpush(char piece, int oldposY, int oldposX, int newposY, int newposX, Ptrtostackelem* stack)
 {
@@ -95,6 +105,7 @@ void intializeboard(Cell grid[8][8])
     //black in the bottom (X)
 
     //WHITE
+    int k = 0;
     for (int i = 0; i < 3; i++)
     {
         for (int j = 0; j < 8; j++)
@@ -103,6 +114,10 @@ void intializeboard(Cell grid[8][8])
             {
                 grid[i][j].piece = 'O';
                 grid[i][j].type = 'N';
+                grid[i][j].pieceNo = k;
+                Whites[k].x = j;
+                Whites[k].y = i;
+                k++;
             }
             else
             {
@@ -123,14 +138,19 @@ void intializeboard(Cell grid[8][8])
     }
 
     //BLACK
+    k = 11;
     for (int i = 5; i < 8; i++)
     {
-        for (int j = 0; j < 8; j++)
+        for (int j = 7; j >= 0; j--)
         {
             if ((i + j) % 2 == 1)
             {
                 grid[i][j].piece = 'X';
                 grid[i][j].type = 'N';
+                grid[i][j].pieceNo = k;
+                Blacks[k].x = j;
+                Blacks[k].y = i;
+                k--;
             }
             else
             {
@@ -708,6 +728,9 @@ int input(Cell grid[8][8], int turn) // turn 1 white(O,W), 0 black(X,B)
     return 0;
 }
 
+void NextKMoves(Cell grid[8][8], int k){
+    
+}
 
 int main()
 {
