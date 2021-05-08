@@ -1,4 +1,7 @@
 #include <stdio.h>
+#include <stdlib.h>
+#include <assert.h>
+#include <malloc.h>
 #include <math.h>
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_timer.h>
@@ -33,8 +36,53 @@ struct Pos
     int color;
     int pieceNo;
     int King;
-    SDL_Rect *piece;
 } pos[8][8];
+
+struct State{
+    struct Pos pos[8][8];
+    struct State* next;
+    struct State* prev;
+    int noOfBlacks;
+    int noOfWhites;
+    int turn;
+};
+
+typedef struct State* state;
+
+state front = NULL, back = NULL;
+
+void addState(){
+    int i, j;
+    state temp = (state)malloc(sizeof(struct State));
+    for(i = 0; i < 8; i++){
+        for(j = 0; j < 8; j++){
+            temp->pos[i][j].x = pos[i][j].x;
+            temp->pos[i][j].y = pos[i][j].y;
+            temp->pos[i][j].color = pos[i][j].color;
+            temp->pos[i][j].pieceNo = pos[i][j].pieceNo;
+            temp->pos[i][j].King = pos[i][j].King;
+        }
+    }
+    temp->noOfBlacks = noOfBlacks;
+    temp->noOfWhites = noOfWhites;
+    temp->turn = turn;
+    temp->next = NULL;
+    temp->prev = NULL;
+    if(front == back && back == NULL){
+        front = temp;
+        back = temp;
+    }
+    else if(front == back){
+        front->next = temp;
+        temp->prev = front;
+        back = temp;
+    }
+    else{
+        temp->prev = back;
+        back->next = temp;
+        back = temp;
+    }
+}
 
 void uswapPos(struct Pos *a, struct Pos *b)
 { //Swaps the non position related information between positions
@@ -48,9 +96,6 @@ void uswapPos(struct Pos *a, struct Pos *b)
     temp = a->King;
     a->King = b->King;
     b->King = temp;
-    SDL_Rect *t = a->piece;
-    a->piece = b->piece;
-    b->piece = t;
 }
 
 void init()
@@ -107,7 +152,6 @@ void init()
             pos[i][j].color = -1;
             pos[i][j].King = -1;
             pos[i][j].pieceNo = -1;
-            pos[i][j].piece = NULL;
         }
     }
 }
@@ -137,16 +181,22 @@ void takePiece(int x, int y)
             if (pos[i][j].pieceNo == check && pos[i][j].color == pos[y][x].color)
             {
                 flag = 1;
-                pos[y][x].piece->h = pos[i][j].piece->h;
-                pos[y][x].piece->w = pos[i][j].piece->w;
-                pos[y][x].piece->x = pos[i][j].piece->x;
-                pos[y][x].piece->y = pos[i][j].piece->y;
-                pos[i][j].piece = pos[y][x].piece;
+                if(pos[y][x].color == 0){
+                    Blacks[pos[y][x].pieceNo].h = Blacks[pos[i][j].pieceNo].h;
+                    Blacks[pos[y][x].pieceNo].w = Blacks[pos[i][j].pieceNo].w; 
+                    Blacks[pos[y][x].pieceNo].x = Blacks[pos[i][j].pieceNo].x; 
+                    Blacks[pos[y][x].pieceNo].y = Blacks[pos[i][j].pieceNo].y; 
+                }
+                else if(pos[y][x].color == 1){
+                    Whites[pos[y][x].pieceNo].h = Whites[pos[i][j].pieceNo].h;
+                    Whites[pos[y][x].pieceNo].w = Whites[pos[i][j].pieceNo].w; 
+                    Whites[pos[y][x].pieceNo].x = Whites[pos[i][j].pieceNo].x; 
+                    Whites[pos[y][x].pieceNo].y = Whites[pos[i][j].pieceNo].y; 
+                }
                 pos[i][j].pieceNo = pos[y][x].pieceNo;
                 pos[y][x].color = -1;
                 pos[y][x].King = -1;
                 pos[y][x].pieceNo = -1;
-                pos[y][x].piece = NULL;
             }
         }
     }
@@ -266,9 +316,6 @@ void makeBlack()
         pos[7][i * 2].pieceNo = i;
         pos[6][1 + i * 2].pieceNo = i + 4;
         pos[5][i * 2].pieceNo = i + 8;
-        pos[7][i * 2].piece = &Blacks[i];
-        pos[6][1 + i * 2].piece = &Blacks[i + 4];
-        pos[5][i * 2].piece = &Blacks[i + 8];
     }
 }
 
@@ -320,9 +367,6 @@ void makeWhite()
         pos[0][1 + i * 2].pieceNo = i;
         pos[1][i * 2].pieceNo = i + 4;
         pos[2][1 + i * 2].pieceNo = i + 8;
-        pos[0][1 + i * 2].piece = &Whites[i];
-        pos[1][i * 2].piece = &Whites[i + 4];
-        pos[2][1 + i * 2].piece = &Whites[i + 8];
     }
 }
 
@@ -412,6 +456,38 @@ void displayTint(int pieceNo, int color)
     }
     // Upload Render to the Window
     SDL_RenderPresent(Rend);
+}
+
+void undo(){
+    int i, j;
+    if(back != NULL){
+        for(i = 0; i < 8; i++){
+            for(j = 0; j < 8; j++){
+                pos[i][j].color = back->pos[i][j].color;
+                pos[i][j].pieceNo = back->pos[i][j].pieceNo;
+                pos[i][j].x = back->pos[i][j].x;
+                pos[i][j].y = back->pos[i][j].y;
+                pos[i][j].King = back->pos[i][j].King;
+                noOfWhites = back->noOfWhites;
+                noOfBlacks = back->noOfBlacks;
+                turn = back->turn;
+                if(pos[i][j].color != -1){
+                    if(pos[i][j].color == 0){
+                        Blacks[pos[i][j].pieceNo].x = pos[i][j].x - Blacks[pos[i][j].pieceNo].w / 2;
+                        Blacks[pos[i][j].pieceNo].y = pos[i][j].y - Blacks[pos[i][j].pieceNo].h / 2;
+                    }
+                    else{
+                        Whites[pos[i][j].pieceNo].x = pos[i][j].x - Whites[pos[i][j].pieceNo].w / 2;
+                        Whites[pos[i][j].pieceNo].y = pos[i][j].y - Whites[pos[i][j].pieceNo].h / 2;
+                    }
+                }
+            }
+        }
+        state temp = back;
+        back = back->prev;
+        // Free Memory
+        free(temp);
+    }
 }
 
 int validMove(int x, int y, int select_x, int select_y)
@@ -781,6 +857,9 @@ void move(int pieceNo, int color, int x, int y)
     // Values to be used for calculating position and relative postion and movement for the pieces
     int x_pos, y_pos, x_final, y_final, distx, disty, currx, curry;
 
+    // Save the previous state
+    addState();
+
     // Chooses which Color Piece to move
     if (color == 0)
     {
@@ -868,9 +947,9 @@ void destroy()
 
 void makemove(int x, int y)
 {
-    int undo = 0, select_x = -1, select_y = -1, attack;
+    int selection = 0, select_x = -1, select_y = -1, attack;
     attack = attackMode();
-    while (!undo)
+    while (!selection)
     {
         // Checking events
         SDL_Event event;
@@ -889,7 +968,7 @@ void makemove(int x, int y)
                     select(event.button.x, event.button.y, &select_x, &select_y); // Assigns the row and column position mouse is currently in
                     if (select_x == x && select_y == y)
                     {
-                        undo = 1;
+                        selection = 1;
                     }
                     else if (pos[select_y][select_x].color == -1 && isItValid(x, y, select_x, select_y, attack))
                     {
@@ -898,7 +977,7 @@ void makemove(int x, int y)
                             turn = 1;
                         else if (turn == 1)
                             turn = 0;
-                        undo = 1;
+                        selection = 1;
                     }
                 }
                 break;
@@ -994,6 +1073,12 @@ void process()
                             close_req = 1;
                         }
                     }
+                }
+                break;
+
+            case SDL_KEYDOWN:
+                if(event.key.keysym.sym == SDLK_u){
+                    undo();
                 }
                 break;
             }
