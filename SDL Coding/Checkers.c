@@ -38,24 +38,28 @@ struct Pos
     int King;
 } pos[8][8];
 
-struct State{
+struct State
+{
     struct Pos pos[8][8];
-    struct State* next;
-    struct State* prev;
+    struct State *next;
+    struct State *prev;
     int noOfBlacks;
     int noOfWhites;
     int turn;
 };
 
-typedef struct State* state;
+typedef struct State *state;
 
 state front = NULL, back = NULL;
 
-void addState(){
+void addState()
+{
     int i, j;
     state temp = (state)malloc(sizeof(struct State));
-    for(i = 0; i < 8; i++){
-        for(j = 0; j < 8; j++){
+    for (i = 0; i < 8; i++)
+    {
+        for (j = 0; j < 8; j++)
+        {
             temp->pos[i][j].x = pos[i][j].x;
             temp->pos[i][j].y = pos[i][j].y;
             temp->pos[i][j].color = pos[i][j].color;
@@ -68,16 +72,19 @@ void addState(){
     temp->turn = turn;
     temp->next = NULL;
     temp->prev = NULL;
-    if(front == back && back == NULL){
+    if (front == back && back == NULL)
+    {
         front = temp;
         back = temp;
     }
-    else if(front == back){
+    else if (front == back)
+    {
         front->next = temp;
         temp->prev = front;
         back = temp;
     }
-    else{
+    else
+    {
         temp->prev = back;
         back->next = temp;
         back = temp;
@@ -406,11 +413,15 @@ void displayTint(int pieceNo, int color)
     SDL_RenderPresent(Rend);
 }
 
-void undo(){
+void undo()
+{
     int i, j;
-    if(back != NULL){
-        for(i = 0; i < 8; i++){
-            for(j = 0; j < 8; j++){
+    if (back != NULL)
+    {
+        for (i = 0; i < 8; i++)
+        {
+            for (j = 0; j < 8; j++)
+            {
                 pos[i][j].color = back->pos[i][j].color;
                 pos[i][j].pieceNo = back->pos[i][j].pieceNo;
                 pos[i][j].x = back->pos[i][j].x;
@@ -419,12 +430,15 @@ void undo(){
                 noOfWhites = back->noOfWhites;
                 noOfBlacks = back->noOfBlacks;
                 turn = back->turn;
-                if(pos[i][j].color != -1){
-                    if(pos[i][j].color == 0){
+                if (pos[i][j].color != -1)
+                {
+                    if (pos[i][j].color == 0)
+                    {
                         Blacks[pos[i][j].pieceNo].x = pos[i][j].x - Blacks[pos[i][j].pieceNo].w / 2;
                         Blacks[pos[i][j].pieceNo].y = pos[i][j].y - Blacks[pos[i][j].pieceNo].h / 2;
                     }
-                    else{
+                    else
+                    {
                         Whites[pos[i][j].pieceNo].x = pos[i][j].x - Whites[pos[i][j].pieceNo].w / 2;
                         Whites[pos[i][j].pieceNo].y = pos[i][j].y - Whites[pos[i][j].pieceNo].h / 2;
                     }
@@ -432,11 +446,13 @@ void undo(){
             }
         }
         state temp = back;
-        if(back == front){
+        if (back == front)
+        {
             back = NULL;
             front = NULL;
         }
-        else{
+        else
+        {
             back = back->prev;
         }
         // Free Memory
@@ -617,26 +633,26 @@ void takePiece(int x, int y)
             if (pos[i][j].pieceNo == check && pos[i][j].color == pos[y][x].color)
             {
                 flag = 1;
-                if(pos[y][x].color == 0){
+                if (pos[y][x].color == 0)
+                {
                     Blacks[pos[y][x].pieceNo].h = Blacks[pos[i][j].pieceNo].h;
-                    Blacks[pos[y][x].pieceNo].w = Blacks[pos[i][j].pieceNo].w; 
-                    Blacks[pos[y][x].pieceNo].x = Blacks[pos[i][j].pieceNo].x; 
-                    Blacks[pos[y][x].pieceNo].y = Blacks[pos[i][j].pieceNo].y; 
+                    Blacks[pos[y][x].pieceNo].w = Blacks[pos[i][j].pieceNo].w;
+                    Blacks[pos[y][x].pieceNo].x = Blacks[pos[i][j].pieceNo].x;
+                    Blacks[pos[y][x].pieceNo].y = Blacks[pos[i][j].pieceNo].y;
                 }
-                else if(pos[y][x].color == 1){
+                else if (pos[y][x].color == 1)
+                {
                     Whites[pos[y][x].pieceNo].h = Whites[pos[i][j].pieceNo].h;
-                    Whites[pos[y][x].pieceNo].w = Whites[pos[i][j].pieceNo].w; 
-                    Whites[pos[y][x].pieceNo].x = Whites[pos[i][j].pieceNo].x; 
-                    Whites[pos[y][x].pieceNo].y = Whites[pos[i][j].pieceNo].y; 
+                    Whites[pos[y][x].pieceNo].w = Whites[pos[i][j].pieceNo].w;
+                    Whites[pos[y][x].pieceNo].x = Whites[pos[i][j].pieceNo].x;
+                    Whites[pos[y][x].pieceNo].y = Whites[pos[i][j].pieceNo].y;
                 }
                 pos[i][j].pieceNo = pos[y][x].pieceNo;
                 pos[y][x].color = -1;
                 pos[y][x].King = -1;
                 pos[y][x].pieceNo = -1;
             }
-            printf("%d ", pos[i][j].color);
         }
-        printf("\n");
     }
 
     attack = attackMode();
@@ -1038,6 +1054,125 @@ void victoryDisplay(int color)
     SDL_RenderPresent(Rend);
 }
 
+void review()
+{
+    int i, j, quit = 0;
+    state curr = front;
+
+    for (i = 0; i < 8; i++)
+    {
+        for (j = 0; j < 8; j++)
+        {
+            pos[i][j].color = curr->pos[i][j].color;
+            pos[i][j].pieceNo = curr->pos[i][j].pieceNo;
+            pos[i][j].x = curr->pos[i][j].x;
+            pos[i][j].y = curr->pos[i][j].y;
+            pos[i][j].King = curr->pos[i][j].King;
+            noOfWhites = curr->noOfWhites;
+            noOfBlacks = curr->noOfBlacks;
+            turn = curr->turn;
+            if (pos[i][j].color != -1)
+            {
+                if (pos[i][j].color == 0)
+                {
+                    Blacks[pos[i][j].pieceNo].x = pos[i][j].x - Blacks[pos[i][j].pieceNo].w / 2;
+                    Blacks[pos[i][j].pieceNo].y = pos[i][j].y - Blacks[pos[i][j].pieceNo].h / 2;
+                }
+                else
+                {
+                    Whites[pos[i][j].pieceNo].x = pos[i][j].x - Whites[pos[i][j].pieceNo].w / 2;
+                    Whites[pos[i][j].pieceNo].y = pos[i][j].y - Whites[pos[i][j].pieceNo].h / 2;
+                }
+            }
+        }
+    }
+
+    while (!quit)
+    {
+        SDL_Event event;
+        while (SDL_PollEvent(&event)) // If there is an event, it is then assigned to event and becomes true
+        {
+            switch (event.type)
+            {
+            case SDL_QUIT: // If the event was a quit window event
+                destroy();
+                exit(0);
+                break;
+
+            case SDL_KEYDOWN:
+                if (event.key.keysym.sym == SDLK_x)
+                {
+                    quit = 1;
+                }
+                else if (event.key.keysym.sym == SDLK_LEFT && curr != front)
+                {
+                    curr = curr->prev;
+                    for (i = 0; i < 8; i++)
+                    {
+                        for (j = 0; j < 8; j++)
+                        {
+                            pos[i][j].color = curr->pos[i][j].color;
+                            pos[i][j].pieceNo = curr->pos[i][j].pieceNo;
+                            pos[i][j].x = curr->pos[i][j].x;
+                            pos[i][j].y = curr->pos[i][j].y;
+                            pos[i][j].King = curr->pos[i][j].King;
+                            noOfWhites = curr->noOfWhites;
+                            noOfBlacks = curr->noOfBlacks;
+                            turn = curr->turn;
+                            if (pos[i][j].color != -1)
+                            {
+                                if (pos[i][j].color == 0)
+                                {
+                                    Blacks[pos[i][j].pieceNo].x = pos[i][j].x - Blacks[pos[i][j].pieceNo].w / 2;
+                                    Blacks[pos[i][j].pieceNo].y = pos[i][j].y - Blacks[pos[i][j].pieceNo].h / 2;
+                                }
+                                else
+                                {
+                                    Whites[pos[i][j].pieceNo].x = pos[i][j].x - Whites[pos[i][j].pieceNo].w / 2;
+                                    Whites[pos[i][j].pieceNo].y = pos[i][j].y - Whites[pos[i][j].pieceNo].h / 2;
+                                }
+                            }
+                        }
+                    }
+                }
+                else if (event.key.keysym.sym == SDLK_RIGHT && curr != back)
+                {
+                    curr = curr->next;
+                    for (i = 0; i < 8; i++)
+                    {
+                        for (j = 0; j < 8; j++)
+                        {
+                            pos[i][j].color = curr->pos[i][j].color;
+                            pos[i][j].pieceNo = curr->pos[i][j].pieceNo;
+                            pos[i][j].x = curr->pos[i][j].x;
+                            pos[i][j].y = curr->pos[i][j].y;
+                            pos[i][j].King = curr->pos[i][j].King;
+                            noOfWhites = curr->noOfWhites;
+                            noOfBlacks = curr->noOfBlacks;
+                            turn = curr->turn;
+                            if (pos[i][j].color != -1)
+                            {
+                                if (pos[i][j].color == 0)
+                                {
+                                    Blacks[pos[i][j].pieceNo].x = pos[i][j].x - Blacks[pos[i][j].pieceNo].w / 2;
+                                    Blacks[pos[i][j].pieceNo].y = pos[i][j].y - Blacks[pos[i][j].pieceNo].h / 2;
+                                }
+                                else
+                                {
+                                    Whites[pos[i][j].pieceNo].x = pos[i][j].x - Whites[pos[i][j].pieceNo].w / 2;
+                                    Whites[pos[i][j].pieceNo].y = pos[i][j].y - Whites[pos[i][j].pieceNo].h / 2;
+                                }
+                            }
+                        }
+                    }
+                }
+                break;
+            }
+        }
+        displayTint(-1, -1); // Refreshes the display
+    }
+}
+
 void process()
 {
     // The function that combines everything
@@ -1086,14 +1221,18 @@ void process()
                 break;
 
             case SDL_KEYDOWN:
-                if(event.key.keysym.sym == SDLK_u){
+                if (event.key.keysym.sym == SDLK_u)
+                {
                     undo();
                 }
-                else if(event.key.keysym.sym == SDLK_r){
+                else if (event.key.keysym.sym == SDLK_r)
+                {
                     addState();
-                    // review();
-                    for(i = 0; i < 8; i++){
-                        for(j = 0; j < 8; j++){
+                    review();
+                    for (i = 0; i < 8; i++)
+                    {
+                        for (j = 0; j < 8; j++)
+                        {
                             pos[i][j].color = back->pos[i][j].color;
                             pos[i][j].pieceNo = back->pos[i][j].pieceNo;
                             pos[i][j].x = back->pos[i][j].x;
@@ -1102,12 +1241,15 @@ void process()
                             noOfWhites = back->noOfWhites;
                             noOfBlacks = back->noOfBlacks;
                             turn = back->turn;
-                            if(pos[i][j].color != -1){
-                                if(pos[i][j].color == 0){
+                            if (pos[i][j].color != -1)
+                            {
+                                if (pos[i][j].color == 0)
+                                {
                                     Blacks[pos[i][j].pieceNo].x = pos[i][j].x - Blacks[pos[i][j].pieceNo].w / 2;
                                     Blacks[pos[i][j].pieceNo].y = pos[i][j].y - Blacks[pos[i][j].pieceNo].h / 2;
                                 }
-                                else{
+                                else
+                                {
                                     Whites[pos[i][j].pieceNo].x = pos[i][j].x - Whites[pos[i][j].pieceNo].w / 2;
                                     Whites[pos[i][j].pieceNo].y = pos[i][j].y - Whites[pos[i][j].pieceNo].h / 2;
                                 }
@@ -1115,11 +1257,13 @@ void process()
                         }
                     }
                     state temp = back;
-                    if(back == front){
+                    if (back == front)
+                    {
                         back = NULL;
                         front = NULL;
                     }
-                    else{
+                    else
+                    {
                         back = back->prev;
                     }
                     // Free Memory
