@@ -20,6 +20,9 @@ SDL_Rect Whites[12];
 
 int turn = 0;
 
+int noOfBlacks = 12;
+int noOfWhites = 12;
+
 int grid[9];
 
 struct Pos
@@ -29,7 +32,7 @@ struct Pos
     int color;
     int pieceNo;
     int King;
-    SDL_Rect* piece;
+    SDL_Rect *piece;
 } pos[8][8];
 
 void uswapPos(struct Pos *a, struct Pos *b)
@@ -44,7 +47,7 @@ void uswapPos(struct Pos *a, struct Pos *b)
     temp = a->King;
     a->King = b->King;
     b->King = temp;
-    SDL_Rect* t = a->piece;
+    SDL_Rect *t = a->piece;
     a->piece = b->piece;
     b->piece = t;
 }
@@ -108,6 +111,52 @@ void init()
     }
 }
 
+void takePiece(int x, int y)
+{
+    // Function to display one less piece after a take piece move
+    int i, j, flag = 1, check;
+
+    // Check color of the piece to remove and the piece number of the last element in the array to replace with
+    if (pos[y][x].color == 0)
+    {
+        check = noOfBlacks - 1;
+        noOfBlacks--;
+    }
+    else if (pos[y][x].color == 1)
+    {
+        check = noOfWhites - 1;
+        noOfWhites--;
+    }
+
+    // Find the last element in the array to replace with
+    for (i = 0; i < 8 && flag; i++)
+    {
+        for (j = 0; j < 8 && flag; j++)
+        {
+            if (pos[i][j].pieceNo == check && pos[i][j].color == pos[y][x].color)
+            {
+                flag = 1;
+                pos[y][x].piece->h = pos[i][j].piece->h;
+                pos[y][x].piece->w = pos[i][j].piece->w;
+                pos[y][x].piece->x = pos[i][j].piece->x;
+                pos[y][x].piece->y = pos[i][j].piece->y;
+                pos[i][j].piece = pos[y][x].piece;
+                pos[i][j].pieceNo = pos[y][x].pieceNo;
+                pos[y][x].color = -1;
+                pos[y][x].King = -1;
+                pos[y][x].pieceNo = -1;
+                pos[y][x].piece = NULL;
+            }
+        }
+    }
+
+    // Inorder to make another move, set change turns once here and it'll be changed once more in the following function leading to no turn change
+    if (turn == 0)
+        turn = 1;
+    else if (turn == 1)
+        turn = 0;
+}
+
 void makeBG()
 {
     // load the image into memory using SDL_image library function
@@ -160,8 +209,9 @@ void makeMoves()
         exit(1);
     }
 
-    for(i = 0; i < 4; i++){
-        SDL_QueryTexture(Nothing, NULL,  NULL, &Moves[i].w, &Moves[i].h);
+    for (i = 0; i < 4; i++)
+    {
+        SDL_QueryTexture(Nothing, NULL, NULL, &Moves[i].w, &Moves[i].h);
         Moves[i].w = WINDOW_WIDTH / 9;
         Moves[i].h = WINDOW_HEIGHT / 9;
     }
@@ -320,13 +370,13 @@ void displayTint(int pieceNo, int color)
     switch (color)
     {
     case 0:
-        for (i = 0; i < 12; i++)
+        for (i = 0; i < noOfBlacks; i++)
         {
             if (i == pieceNo)
                 continue;
             SDL_RenderCopy(Rend, Black_tex, NULL, &Blacks[i]);
         }
-        for (i = 0; i < 12; i++)
+        for (i = 0; i < noOfWhites; i++)
         {
             SDL_RenderCopy(Rend, White_tex, NULL, &Whites[i]);
         }
@@ -335,13 +385,13 @@ void displayTint(int pieceNo, int color)
         SDL_SetTextureColorMod(Black_tex, 255, 255, 255);
         break;
     case 1:
-        for (i = 0; i < 12; i++)
+        for (i = 0; i < noOfWhites; i++)
         {
             if (i == pieceNo)
                 continue;
             SDL_RenderCopy(Rend, White_tex, NULL, &Whites[i]);
         }
-        for (i = 0; i < 12; i++)
+        for (i = 0; i < noOfBlacks; i++)
         {
             SDL_RenderCopy(Rend, Black_tex, NULL, &Blacks[i]);
         }
@@ -350,10 +400,13 @@ void displayTint(int pieceNo, int color)
         SDL_SetTextureColorMod(White_tex, 255, 255, 255);
         break;
     default:
-        for (i = 0; i < 12; i++)
+        for (i = 0; i < noOfWhites; i++)
+        {
+            SDL_RenderCopy(Rend, White_tex, NULL, &Whites[i]);
+        }
+        for (i = 0; i < noOfBlacks; i++)
         {
             SDL_RenderCopy(Rend, Black_tex, NULL, &Blacks[i]);
-            SDL_RenderCopy(Rend, White_tex, NULL, &Whites[i]);
         }
     }
     // Upload Render to the Window
@@ -362,88 +415,176 @@ void displayTint(int pieceNo, int color)
 
 int validMove(int x, int y, int select_x, int select_y)
 {
+    // Most basic function in checking if a move is possible
     // Checking all take piece moves
-    if(select_x - x == 2 && y - select_y == 2 && select_y > -1 && select_y < 8 && select_x > -1 && select_x < 8){
-        if(pos[y - 1][x + 1].color != turn && pos[y - 1][x + 1].color != -1 && pos[select_y][select_x].pieceNo == -1){
+    if (x - select_x == 2 && y - select_y == 2 && select_y > -1 && select_y < 8 && select_x > -1 && select_x < 8)
+    {
+        if (pos[y - 1][x - 1].color != turn && pos[y - 1][x - 1].color != -1 && pos[select_y][select_x].pieceNo == -1 && ((pos[y][x].color == 0) || (pos[y][x].King == 1)))
+        {
             return 1;
         }
     }
-    if(x - select_x == 2 && y - select_y == 2 && select_y > -1 && select_y < 8 && select_x > -1 && select_x < 8){
-        if(pos[y - 1][x - 1].color != turn && pos[y - 1][x - 1].color != -1 && pos[select_y][select_x].pieceNo == -1){
+    if (select_x - x == 2 && y - select_y == 2 && select_y > -1 && select_y < 8 && select_x > -1 && select_x < 8)
+    {
+        if (pos[y - 1][x + 1].color != turn && pos[y - 1][x + 1].color != -1 && pos[select_y][select_x].pieceNo == -1 && ((pos[y][x].color == 0) || (pos[y][x].King == 1)))
+        {
             return 1;
         }
     }
-    if(select_x - x == 2 && select_y - y == 2 && select_y > -1 && select_y < 8 && select_x > -1 && select_x < 8){
-        if(pos[y + 1][x + 1].color != turn && pos[y + 1][x + 1].color != -1 && pos[select_y][select_x].pieceNo == -1){
+    if (x - select_x == 2 && select_y - y == 2 && select_y > -1 && select_y < 8 && select_x > -1 && select_x < 8)
+    {
+        if (pos[y + 1][x - 1].color != turn && pos[y + 1][x - 1].color != -1 && pos[select_y][select_x].pieceNo == -1 && ((pos[y][x].color == 1) || (pos[y][x].King == 1)))
+        {
             return 1;
         }
     }
-    if(x - select_x == 2 && select_y - y == 2 && select_y > -1 && select_y < 8 && select_x > -1 && select_x < 8){
-        if(pos[y + 1][x - 1].color != turn && pos[y + 1][x - 1].color != -1 && pos[select_y][select_x].pieceNo == -1){
+    if (select_x - x == 2 && select_y - y == 2 && select_y > -1 && select_y < 8 && select_x > -1 && select_x < 8)
+    {
+        if (pos[y + 1][x + 1].color != turn && pos[y + 1][x + 1].color != -1 && pos[select_y][select_x].pieceNo == -1 && ((pos[y][x].color == 1) || (pos[y][x].King == 1)))
+        {
             return 1;
         }
     }
 
     // Checking all normal moves
-    if(select_x - x == 1 && y - select_y == 1 && select_y > -1 && select_y < 8 && select_x > -1 && select_x < 8){
-        if(pos[select_y][select_x].pieceNo == -1){
+    if (select_x - x == 1 && y - select_y == 1 && select_y > -1 && select_y < 8 && select_x > -1 && select_x < 8)
+    {
+        if (pos[select_y][select_x].pieceNo == -1 && ((pos[y][x].color == 0) || (pos[y][x].King == 1)))
+        {
             return 1;
         }
     }
-    if(x - select_x == 1 && y - select_y == 1 && select_y > -1 && select_y < 8 && select_x > -1 && select_x < 8){
-        if(pos[select_y][select_x].pieceNo == -1){
+    if (x - select_x == 1 && y - select_y == 1 && select_y > -1 && select_y < 8 && select_x > -1 && select_x < 8)
+    {
+        if (pos[select_y][select_x].pieceNo == -1 && ((pos[y][x].color == 0) || (pos[y][x].King == 1)))
+        {
             return 1;
         }
     }
-    if(select_x - x == 1 && select_y - y == 1 && select_y > -1 && select_y < 8 && select_x > -1 && select_x < 8){
-        if(pos[select_y][select_x].pieceNo == -1){
+    if (select_x - x == 1 && select_y - y == 1 && select_y > -1 && select_y < 8 && select_x > -1 && select_x < 8)
+    {
+        if (pos[select_y][select_x].pieceNo == -1 && ((pos[y][x].color == 1) || (pos[y][x].King == 1)))
+        {
             return 1;
         }
     }
-    if(x - select_x == 1 && select_y - y == 1 && select_y > -1 && select_y < 8 && select_x > -1 && select_x < 8){
-        if(pos[select_y][select_x].pieceNo == -1){
+    if (x - select_x == 1 && select_y - y == 1 && select_y > -1 && select_y < 8 && select_x > -1 && select_x < 8)
+    {
+        if (pos[select_y][select_x].pieceNo == -1 && ((pos[y][x].color == 1) || (pos[y][x].King == 1)))
+        {
             return 1;
         }
     }
     return 0;
 }
 
-void findValidMoves(int valid[], int x, int y){
+void findValidMoves(int valid[], int x, int y)
+{
+    // Function to store an array with 1 at positions where movement is possible
+    // Valid[0] - Take piece top left
+    // Valid[1] - Move piece top left
+    // Valid[2] - Move piece top right
+    // Valid[3] - Take piece top right
+    // Valid[4] - Take piece bottom left
+    // Valid[5] - Move piece bottom left
+    // Valid[6] - Move piece bottom right
+    // Valid[7] - Take piece bottom right
     int flag = 1;
-    if(validMove(x, y, x - 2, y - 2) == 1){
+    if (validMove(x, y, x - 2, y - 2) == 1)
+    {
         valid[0] = 1;
         flag = 0;
     }
-    if(validMove(x, y, x + 2, y - 2) == 1){
+    if (validMove(x, y, x + 2, y - 2) == 1)
+    {
         valid[3] = 1;
         flag = 0;
     }
-    if(validMove(x, y, x - 2, y + 2) == 1){
+    if (validMove(x, y, x - 2, y + 2) == 1)
+    {
         valid[4] = 1;
         flag = 0;
     }
-    if(validMove(x, y, x + 2, y + 2) == 1){
+    if (validMove(x, y, x + 2, y + 2) == 1)
+    {
         valid[7] = 1;
         flag = 0;
     }
-    if(flag){
-        if(validMove(x, y, x - 1, y - 1) == 1){
+    if (flag)
+    {
+        if (validMove(x, y, x - 1, y - 1) == 1)
+        {
             valid[1] = 1;
         }
-        if(validMove(x, y, x + 1, y - 1) == 1){
+        if (validMove(x, y, x + 1, y - 1) == 1)
+        {
             valid[2] = 1;
         }
-        if(validMove(x, y, x - 1, y + 1) == 1){
+        if (validMove(x, y, x - 1, y + 1) == 1)
+        {
             valid[5] = 1;
         }
-        if(validMove(x, y, x + 1, y + 1) == 1){
+        if (validMove(x, y, x + 1, y + 1) == 1)
+        {
             valid[6] = 1;
         }
     }
 }
 
-void displayValidMoves(int pieceNo, int color, int x, int y){
-    int validMoves[8] = { 0 }, i = 0;
+int isItValid(int x, int y, int select_x, int select_y)
+{
+    int validMoves[8] = { 0 };
+    findValidMoves(validMoves, x, y);
+
+    if (validMoves[0] || validMoves[3] || validMoves[4] || validMoves[7])
+    {
+        if (validMoves[0] && x - select_x == 2 && y - select_y == 2)
+        {
+            return 1;
+        }
+        if (validMoves[3] && select_x - x == 2 && y - select_y == 2)
+        {
+            return 1;
+        }
+        if (validMoves[4] && x - select_x == 2 && select_y - y == 2)
+        {
+            return 1;
+        }
+        if (validMoves[7] && select_x - x == 2 && select_y - y == 2)
+        {
+            return 1;
+        }
+
+    }
+
+    // Checks the remaining normal moves
+    else
+    {
+
+        if (validMoves[1] && x - select_x == 1 && y - select_y == 1)
+        {
+            return 1;
+        }
+        if (validMoves[2] && select_x - x == 1 && y - select_y == 1)
+        {
+            return 1;
+        }
+        if (validMoves[5] && x - select_x == 1 && select_y - y == 1)
+        {
+            return 1;
+        }
+        if (validMoves[6] && select_x - x == 1 && select_y - y == 1)
+        {
+            return 1;
+        }
+    }
+    
+    return 0;
+}
+
+void displayValidMoves(int pieceNo, int color, int x, int y)
+{
+    int validMoves[8] = {0}, i = 0;
 
     // Clear the Window
     SDL_RenderClear(Rend);
@@ -459,13 +600,13 @@ void displayValidMoves(int pieceNo, int color, int x, int y){
     switch (color)
     {
     case 0:
-        for (i = 0; i < 12; i++)
+        for (i = 0; i < noOfBlacks; i++)
         {
             if (i == pieceNo)
                 continue;
             SDL_RenderCopy(Rend, Black_tex, NULL, &Blacks[i]);
         }
-        for (i = 0; i < 12; i++)
+        for (i = 0; i < noOfWhites; i++)
         {
             SDL_RenderCopy(Rend, White_tex, NULL, &Whites[i]);
         }
@@ -474,13 +615,13 @@ void displayValidMoves(int pieceNo, int color, int x, int y){
         SDL_SetTextureColorMod(Black_tex, 255, 255, 255);
         break;
     case 1:
-        for (i = 0; i < 12; i++)
+        for (i = 0; i < noOfWhites; i++)
         {
             if (i == pieceNo)
                 continue;
             SDL_RenderCopy(Rend, White_tex, NULL, &Whites[i]);
         }
-        for (i = 0; i < 12; i++)
+        for (i = 0; i < noOfBlacks; i++)
         {
             SDL_RenderCopy(Rend, Black_tex, NULL, &Blacks[i]);
         }
@@ -489,36 +630,48 @@ void displayValidMoves(int pieceNo, int color, int x, int y){
         SDL_SetTextureColorMod(White_tex, 255, 255, 255);
         break;
     default:
-        for (i = 0; i < 12; i++)
+        for (i = 0; i < noOfWhites; i++)
+        {
+            SDL_RenderCopy(Rend, White_tex, NULL, &Whites[i]);
+        }
+        for (i = 0; i < noOfBlacks; i++)
         {
             SDL_RenderCopy(Rend, Black_tex, NULL, &Blacks[i]);
-            SDL_RenderCopy(Rend, White_tex, NULL, &Whites[i]);
         }
     }
 
     i = 0;
+
+    // Finds the valid moves possible from a given position and stores in an array
     findValidMoves(validMoves, x, y);
-    if(validMoves[0] || validMoves[3] || validMoves[4] || validMoves[7]){
+
+    // Checks if move is a take piece move and displays accordingly
+    if (validMoves[0] || validMoves[3] || validMoves[4] || validMoves[7])
+    {
         SDL_SetTextureColorMod(Nothing, 255, 130, 53);
-        if(validMoves[0]){
+        if (validMoves[0])
+        {
             Moves[i].x = pos[y - 2][x - 2].x - Moves[i].w / 2;
             Moves[i].y = pos[y - 2][x - 2].y - Moves[i].h / 2;
             SDL_RenderCopy(Rend, Nothing, NULL, &Moves[i]);
             i++;
         }
-        if(validMoves[3]){
+        if (validMoves[3])
+        {
             Moves[i].x = pos[y - 2][x + 2].x - Moves[i].w / 2;
             Moves[i].y = pos[y - 2][x + 2].y - Moves[i].h / 2;
             SDL_RenderCopy(Rend, Nothing, NULL, &Moves[i]);
             i++;
         }
-        if(validMoves[4]){
+        if (validMoves[4])
+        {
             Moves[i].x = pos[y + 2][x - 2].x - Moves[i].w / 2;
             Moves[i].y = pos[y + 2][x - 2].y - Moves[i].h / 2;
             SDL_RenderCopy(Rend, Nothing, NULL, &Moves[i]);
             i++;
         }
-        if(validMoves[7]){
+        if (validMoves[7])
+        {
             Moves[i].x = pos[y + 2][x + 2].x - Moves[i].w / 2;
             Moves[i].y = pos[y + 2][x + 2].y - Moves[i].h / 2;
             SDL_RenderCopy(Rend, Nothing, NULL, &Moves[i]);
@@ -526,27 +679,34 @@ void displayValidMoves(int pieceNo, int color, int x, int y){
         }
         SDL_SetTextureColorMod(Nothing, 255, 255, 255);
     }
-    else{
+
+    // Checks the remaining normal moves
+    else
+    {
         SDL_SetTextureColorMod(Nothing, 48, 232, 191);
-        if(validMoves[1]){
+        if (validMoves[1])
+        {
             Moves[i].x = pos[y - 1][x - 1].x - Moves[i].w / 2;
             Moves[i].y = pos[y - 1][x - 1].y - Moves[i].h / 2;
             SDL_RenderCopy(Rend, Nothing, NULL, &Moves[i]);
             i++;
         }
-        if(validMoves[2]){
+        if (validMoves[2])
+        {
             Moves[i].x = pos[y - 1][x + 1].x - Moves[i].w / 2;
             Moves[i].y = pos[y - 1][x + 1].y - Moves[i].h / 2;
             SDL_RenderCopy(Rend, Nothing, NULL, &Moves[i]);
             i++;
         }
-        if(validMoves[5]){
+        if (validMoves[5])
+        {
             Moves[i].x = pos[y + 1][x - 1].x - Moves[i].w / 2;
             Moves[i].y = pos[y + 1][x - 1].y - Moves[i].h / 2;
             SDL_RenderCopy(Rend, Nothing, NULL, &Moves[i]);
             i++;
         }
-        if(validMoves[6]){
+        if (validMoves[6])
+        {
             Moves[i].x = pos[y + 1][x + 1].x - Moves[i].w / 2;
             Moves[i].y = pos[y + 1][x + 1].y - Moves[i].h / 2;
             SDL_RenderCopy(Rend, Nothing, NULL, &Moves[i]);
@@ -585,9 +745,19 @@ void move(int pieceNo, int color, int x, int y)
             displayTint(pieceNo, 0);
             SDL_Delay(500 / 60);
         }
+        if (currx - x == 2 && curry - y == 2)
+            takePiece(x + 1, y + 1);
+        else if (x - currx == 2 && curry - y == 2)
+            takePiece(x - 1, y + 1);
+        else if (currx - x == 2 && y - curry == 2)
+            takePiece(x + 1, y - 1);
+        else if (x - currx == 2 && y - curry == 2)
+            takePiece(x - 1, y - 1);
         uswapPos(&pos[curry][currx], &pos[y][x]);
+        if (y == 0)
+            pos[y][x].King = 1;
     }
-    else if(color == 1)
+    else if (color == 1)
     {
         select(Whites[pieceNo].x, Whites[pieceNo].y, &currx, &curry);
         x_pos = Whites[pieceNo].x;
@@ -607,7 +777,17 @@ void move(int pieceNo, int color, int x, int y)
             displayTint(pieceNo, 1);
             SDL_Delay(500 / 60);
         }
+        if (currx - x == 2 && curry - y == 2)
+            takePiece(x + 1, y + 1);
+        else if (x - currx == 2 && curry - y == 2)
+            takePiece(x - 1, y + 1);
+        else if (currx - x == 2 && y - curry == 2)
+            takePiece(x + 1, y - 1);
+        else if (x - currx == 2 && y - curry == 2)
+            takePiece(x - 1, y - 1);
         uswapPos(&pos[curry][currx], &pos[y][x]);
+        if (y == 7)
+            pos[y][x].King = 1;
     }
 }
 
@@ -653,12 +833,12 @@ void makemove(int x, int y)
                     {
                         undo = 1;
                     }
-                    else if (pos[select_y][select_x].color == -1 && validMove(x, y, select_x, select_y))
+                    else if (pos[select_y][select_x].color == -1 && isItValid(x, y, select_x, select_y))
                     {
                         move(pos[y][x].pieceNo, pos[y][x].color, select_x, select_y);
-                        if(turn == 0)
+                        if (turn == 0)
                             turn = 1;
-                        else if(turn == 1)
+                        else if (turn == 1)
                             turn = 0;
                         undo = 1;
                     }
