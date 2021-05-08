@@ -578,7 +578,7 @@ int isItValid(int x, int y, int select_x, int select_y)
             return 1;
         }
     }
-    
+
     return 0;
 }
 
@@ -847,7 +847,7 @@ void makemove(int x, int y)
             }
         }
         displayValidMoves(pos[y][x].pieceNo, pos[y][x].color, x, y);
-        // displayTint(pos[y][x].pieceNo, pos[y][x].color); // Refreshes the display
+        // Refreshes the display
     }
 }
 
@@ -876,7 +876,6 @@ void process()
                 break;
 
             case SDL_MOUSEBUTTONDOWN:
-                //displayValidMoves(x, y);
                 if (event.button.button == SDL_BUTTON_LEFT)
                 {                                                                 // Only true if the mouse is in the window and left button is clicked
                     select(event.button.x, event.button.y, &select_x, &select_y); // Assigns the row and column position mouse is currently in
