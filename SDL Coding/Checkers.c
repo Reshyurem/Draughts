@@ -484,10 +484,17 @@ void undo(){
             }
         }
         state temp = back;
-        back = back->prev;
+        if(back == front){
+            back = NULL;
+            front = NULL;
+        }
+        else{
+            back = back->prev;
+        }
         // Free Memory
         free(temp);
     }
+    printf("%p %p\n", front, back);
 }
 
 int validMove(int x, int y, int select_x, int select_y)
