@@ -156,58 +156,6 @@ void init()
     }
 }
 
-void takePiece(int x, int y)
-{
-    // Function to display one less piece after a take piece move
-    int i, j, flag = 1, check;
-
-    // Check color of the piece to remove and the piece number of the last element in the array to replace with
-    if (pos[y][x].color == 0)
-    {
-        check = noOfBlacks - 1;
-        noOfBlacks--;
-    }
-    else if (pos[y][x].color == 1)
-    {
-        check = noOfWhites - 1;
-        noOfWhites--;
-    }
-
-    // Find the last element in the array to replace with
-    for (i = 0; i < 8 && flag; i++)
-    {
-        for (j = 0; j < 8 && flag; j++)
-        {
-            if (pos[i][j].pieceNo == check && pos[i][j].color == pos[y][x].color)
-            {
-                flag = 1;
-                if(pos[y][x].color == 0){
-                    Blacks[pos[y][x].pieceNo].h = Blacks[pos[i][j].pieceNo].h;
-                    Blacks[pos[y][x].pieceNo].w = Blacks[pos[i][j].pieceNo].w; 
-                    Blacks[pos[y][x].pieceNo].x = Blacks[pos[i][j].pieceNo].x; 
-                    Blacks[pos[y][x].pieceNo].y = Blacks[pos[i][j].pieceNo].y; 
-                }
-                else if(pos[y][x].color == 1){
-                    Whites[pos[y][x].pieceNo].h = Whites[pos[i][j].pieceNo].h;
-                    Whites[pos[y][x].pieceNo].w = Whites[pos[i][j].pieceNo].w; 
-                    Whites[pos[y][x].pieceNo].x = Whites[pos[i][j].pieceNo].x; 
-                    Whites[pos[y][x].pieceNo].y = Whites[pos[i][j].pieceNo].y; 
-                }
-                pos[i][j].pieceNo = pos[y][x].pieceNo;
-                pos[y][x].color = -1;
-                pos[y][x].King = -1;
-                pos[y][x].pieceNo = -1;
-            }
-        }
-    }
-
-    // Inorder to make another move, set change turns once here and it'll be changed once more in the following function leading to no turn change
-    if (turn == 0)
-        turn = 1;
-    else if (turn == 1)
-        turn = 0;
-}
-
 void makeBG()
 {
     // load the image into memory using SDL_image library function
@@ -494,7 +442,6 @@ void undo(){
         // Free Memory
         free(temp);
     }
-    printf("%p %p\n", front, back);
 }
 
 int validMove(int x, int y, int select_x, int select_y)
@@ -643,6 +590,61 @@ int attackMode()
         }
     }
     return total;
+}
+
+void takePiece(int x, int y)
+{
+    // Function to display one less piece after a take piece move
+    int i, j, flag = 1, check, attack;
+
+    // Check color of the piece to remove and the piece number of the last element in the array to replace with
+    if (pos[y][x].color == 0)
+    {
+        check = noOfBlacks - 1;
+        noOfBlacks--;
+    }
+    else if (pos[y][x].color == 1)
+    {
+        check = noOfWhites - 1;
+        noOfWhites--;
+    }
+
+    // Find the last element in the array to replace with
+    for (i = 0; i < 8 && flag; i++)
+    {
+        for (j = 0; j < 8 && flag; j++)
+        {
+            if (pos[i][j].pieceNo == check && pos[i][j].color == pos[y][x].color)
+            {
+                flag = 1;
+                if(pos[y][x].color == 0){
+                    Blacks[pos[y][x].pieceNo].h = Blacks[pos[i][j].pieceNo].h;
+                    Blacks[pos[y][x].pieceNo].w = Blacks[pos[i][j].pieceNo].w; 
+                    Blacks[pos[y][x].pieceNo].x = Blacks[pos[i][j].pieceNo].x; 
+                    Blacks[pos[y][x].pieceNo].y = Blacks[pos[i][j].pieceNo].y; 
+                }
+                else if(pos[y][x].color == 1){
+                    Whites[pos[y][x].pieceNo].h = Whites[pos[i][j].pieceNo].h;
+                    Whites[pos[y][x].pieceNo].w = Whites[pos[i][j].pieceNo].w; 
+                    Whites[pos[y][x].pieceNo].x = Whites[pos[i][j].pieceNo].x; 
+                    Whites[pos[y][x].pieceNo].y = Whites[pos[i][j].pieceNo].y; 
+                }
+                pos[i][j].pieceNo = pos[y][x].pieceNo;
+                pos[y][x].color = -1;
+                pos[y][x].King = -1;
+                pos[y][x].pieceNo = -1;
+            }
+            printf("%d ", pos[i][j].color);
+        }
+        printf("\n");
+    }
+
+    attack = attackMode();
+    // Inorder to make another move, set change turns once here and it'll be changed once more in the following function leading to no turn change
+    if (turn == 0 && attack != 0)
+        turn = 1;
+    else if (turn == 1 && attack != 0)
+        turn = 0;
 }
 
 int movementPossible(int color)
@@ -889,6 +891,7 @@ void move(int pieceNo, int color, int x, int y)
             displayTint(pieceNo, 0);
             SDL_Delay(500 / 60);
         }
+        uswapPos(&pos[curry][currx], &pos[y][x]);
         if (currx - x == 2 && curry - y == 2)
             takePiece(x + 1, y + 1);
         else if (x - currx == 2 && curry - y == 2)
@@ -897,7 +900,6 @@ void move(int pieceNo, int color, int x, int y)
             takePiece(x + 1, y - 1);
         else if (x - currx == 2 && y - curry == 2)
             takePiece(x - 1, y - 1);
-        uswapPos(&pos[curry][currx], &pos[y][x]);
         if (y == 0)
             pos[y][x].King = 1;
     }
@@ -921,6 +923,7 @@ void move(int pieceNo, int color, int x, int y)
             displayTint(pieceNo, 1);
             SDL_Delay(500 / 60);
         }
+        uswapPos(&pos[curry][currx], &pos[y][x]);
         if (currx - x == 2 && curry - y == 2)
             takePiece(x + 1, y + 1);
         else if (x - currx == 2 && curry - y == 2)
@@ -929,7 +932,6 @@ void move(int pieceNo, int color, int x, int y)
             takePiece(x + 1, y - 1);
         else if (x - currx == 2 && y - curry == 2)
             takePiece(x - 1, y - 1);
-        uswapPos(&pos[curry][currx], &pos[y][x]);
         if (y == 7)
             pos[y][x].King = 1;
     }
@@ -1039,7 +1041,7 @@ void victoryDisplay(int color)
 void process()
 {
     // The function that combines everything
-    int close_req = 0, select_x, select_y;
+    int close_req = 0, select_x, select_y, i, j;
 
     init();
 
@@ -1086,6 +1088,42 @@ void process()
             case SDL_KEYDOWN:
                 if(event.key.keysym.sym == SDLK_u){
                     undo();
+                }
+                else if(event.key.keysym.sym == SDLK_r){
+                    addState();
+                    // review();
+                    for(i = 0; i < 8; i++){
+                        for(j = 0; j < 8; j++){
+                            pos[i][j].color = back->pos[i][j].color;
+                            pos[i][j].pieceNo = back->pos[i][j].pieceNo;
+                            pos[i][j].x = back->pos[i][j].x;
+                            pos[i][j].y = back->pos[i][j].y;
+                            pos[i][j].King = back->pos[i][j].King;
+                            noOfWhites = back->noOfWhites;
+                            noOfBlacks = back->noOfBlacks;
+                            turn = back->turn;
+                            if(pos[i][j].color != -1){
+                                if(pos[i][j].color == 0){
+                                    Blacks[pos[i][j].pieceNo].x = pos[i][j].x - Blacks[pos[i][j].pieceNo].w / 2;
+                                    Blacks[pos[i][j].pieceNo].y = pos[i][j].y - Blacks[pos[i][j].pieceNo].h / 2;
+                                }
+                                else{
+                                    Whites[pos[i][j].pieceNo].x = pos[i][j].x - Whites[pos[i][j].pieceNo].w / 2;
+                                    Whites[pos[i][j].pieceNo].y = pos[i][j].y - Whites[pos[i][j].pieceNo].h / 2;
+                                }
+                            }
+                        }
+                    }
+                    state temp = back;
+                    if(back == front){
+                        back = NULL;
+                        front = NULL;
+                    }
+                    else{
+                        back = back->prev;
+                    }
+                    // Free Memory
+                    free(temp);
                 }
                 break;
             }
