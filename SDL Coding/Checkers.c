@@ -14,6 +14,7 @@ SDL_Texture *Bg;
 SDL_Texture *Black_tex;
 SDL_Texture *White_tex;
 SDL_Texture *Nothing;
+SDL_Texture *Victory;
 SDL_Rect Moves[4];
 SDL_Rect Blacks[12];
 SDL_Rect Whites[12];
@@ -361,9 +362,9 @@ void displayTint(int pieceNo, int color)
     SDL_RenderClear(Rend);
     // Write all image to the window
     if (turn == 0)
-        SDL_SetTextureColorMod(Bg, 220, 36, 36);
-    else if (turn == 1)
         SDL_SetTextureColorMod(Bg, 74, 86, 157);
+    else if (turn == 1)
+        SDL_SetTextureColorMod(Bg, 220, 36, 36);
     SDL_RenderCopy(Rend, Bg, NULL, NULL);
     SDL_SetTextureColorMod(Bg, 255, 255, 255);
 
@@ -491,7 +492,8 @@ void findValidMoves(int valid[], int x, int y)
     // Valid[7] - Take piece bottom right
     int flag = 1, i;
 
-    for(i = 0; i < 8; i++){
+    for (i = 0; i < 8; i++)
+    {
         valid[i] = 0;
     }
     if (validMove(x, y, x - 2, y - 2) == 1)
@@ -535,18 +537,23 @@ void findValidMoves(int valid[], int x, int y)
     }
 }
 
-int attackMode(){
+int attackMode()
+{
     // Checks the state of all pieces and whether an attack is possible
-    int x, y, i, total = 0, valid[8] = { 0 };
-    if(turn == 0){
-        for(i = 0; i < noOfBlacks; i++){
+    int x, y, i, total = 0, valid[8] = {0};
+    if (turn == 0)
+    {
+        for (i = 0; i < noOfBlacks; i++)
+        {
             select(Blacks[i].x, Blacks[i].y, &x, &y);
             findValidMoves(valid, x, y);
             total += valid[0] + valid[3] + valid[4] + valid[7];
         }
     }
-    else if(turn == 1){
-        for(i = 0; i < noOfWhites; i++){
+    else if (turn == 1)
+    {
+        for (i = 0; i < noOfWhites; i++)
+        {
             select(Whites[i].x, Whites[i].y, &x, &y);
             findValidMoves(valid, x, y);
             total += valid[0] + valid[3] + valid[4] + valid[7];
@@ -555,9 +562,37 @@ int attackMode(){
     return total;
 }
 
+int movementPossible(int color)
+{
+    // Part of the Victory Condition
+    // Checks is any move is possible by any piece of a given color
+    int valid[8], i, j, x, y, total = 0;
+    if (color == 0)
+    {
+        for (i = 0; i < noOfBlacks; i++)
+        {
+            select(Blacks[i].x, Blacks[i].y, &x, &y);
+            findValidMoves(valid, x, y);
+            for (j = 0; j < 8; j++)
+                total += valid[j];
+        }
+    }
+    if (color == 1)
+    {
+        for (i = 0; i < noOfWhites; i++)
+        {
+            select(Whites[i].x, Whites[i].y, &x, &y);
+            findValidMoves(valid, x, y);
+            for (j = 0; j < 8; j++)
+                total += valid[j];
+        }
+    }
+    return total;
+}
+
 int isItValid(int x, int y, int select_x, int select_y, int attack)
 {
-    int validMoves[8] = { 0 };
+    int validMoves[8] = {0};
     findValidMoves(validMoves, x, y);
 
     if (validMoves[0] || validMoves[3] || validMoves[4] || validMoves[7])
@@ -578,11 +613,10 @@ int isItValid(int x, int y, int select_x, int select_y, int attack)
         {
             return 1;
         }
-
     }
 
     // Checks the remaining normal moves
-    else if(attack == 0)
+    else if (attack == 0)
     {
 
         if (validMoves[1] && x - select_x == 1 && y - select_y == 1)
@@ -615,9 +649,9 @@ void displayValidMoves(int pieceNo, int color, int x, int y, int attack)
 
     // Write all image to the window
     if (turn == 0)
-        SDL_SetTextureColorMod(Bg, 220, 36, 36);
-    else if (turn == 1)
         SDL_SetTextureColorMod(Bg, 74, 86, 157);
+    else if (turn == 1)
+        SDL_SetTextureColorMod(Bg, 220, 36, 36);
     SDL_RenderCopy(Rend, Bg, NULL, NULL);
     SDL_SetTextureColorMod(Bg, 255, 255, 255);
 
@@ -705,7 +739,7 @@ void displayValidMoves(int pieceNo, int color, int x, int y, int attack)
     }
 
     // Checks the remaining normal moves
-    else if(attack == 0)
+    else if (attack == 0)
     {
         SDL_SetTextureColorMod(Nothing, 48, 232, 191);
         if (validMoves[1])
@@ -875,6 +909,47 @@ void makemove(int x, int y)
     }
 }
 
+void victoryDisplay(int color)
+{
+    SDL_RenderClear(Rend);
+    // Write all image to the window
+    // load the image into memory using SDL_image library function
+    if (color == 0)
+    {
+        Surface = IMG_Load("resources/black_victory.png");
+    }
+    else if (color == 0)
+    {
+        Surface = IMG_Load("resources/white_victory.png");
+    }
+    if (!Surface)
+    {
+        printf("error creating surface\n");
+        SDL_DestroyRenderer(Rend);
+        SDL_DestroyWindow(Window);
+        SDL_Quit();
+        exit(1);
+    }
+
+    // load the image data into the graphics hardware's memory
+    Victory = SDL_CreateTextureFromSurface(Rend, Surface);
+    SDL_FreeSurface(Surface);
+    if (!Victory)
+    {
+        printf("error creating texture: %s\n", SDL_GetError());
+        SDL_DestroyRenderer(Rend);
+        SDL_DestroyWindow(Window);
+        SDL_Quit();
+        exit(1);
+    }
+
+    // Copy the Victory picture to the Render screen
+    SDL_RenderCopy(Rend, Victory, NULL, NULL);
+
+    // Upload Render to the Window
+    SDL_RenderPresent(Rend);
+}
+
 void process()
 {
     // The function that combines everything
@@ -906,6 +981,18 @@ void process()
                     if (pos[select_y][select_x].color == turn)
                     {
                         makemove(select_x, select_y);
+                        if (movementPossible(0) == 0)
+                        {
+                            victoryDisplay(1);
+                            SDL_Delay(15000);
+                            close_req = 1;
+                        }
+                        else if (movementPossible(1) == 0)
+                        {
+                            victoryDisplay(0);
+                            SDL_Delay(15000);
+                            close_req = 1;
+                        }
                     }
                 }
                 break;
