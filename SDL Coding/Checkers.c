@@ -50,11 +50,11 @@ struct State
 
 typedef struct State *state;
 
-state front = NULL, back = NULL;
-state kfront = NULL, kback = NULL;
+state front = NULL, back = NULL;   // Will act as a doubly linked list used as a stack for review and undo
+state kfront = NULL, kback = NULL; // Will store the next k moves as a doubly linked list
 
-void addState()
-{
+void addState() // Takes the current state of the board, allocates memory and stores it in the stack
+{               // Acts as the push function of states
     int i, j;
     state temp = (state)malloc(sizeof(struct State));
     for (i = 0; i < 8; i++)
@@ -92,8 +92,8 @@ void addState()
     }
 }
 
-void removeState()
-{
+void removeState() // Restores the state of the board to a previous state
+{                  // Acts as the pop function of states
     int i, j;
     for (i = 0; i < 8; i++)
     {
@@ -150,7 +150,7 @@ void uswapPos(struct Pos *a, struct Pos *b)
     b->King = temp;
 }
 
-void init()
+void init() // Initializes all the main SDL objects that will be used as well as the board
 {
     // attempt to initialize graphics and timer system
     if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER) != 0)
@@ -208,7 +208,7 @@ void init()
     }
 }
 
-void makeBG()
+void makeBG() // Sets up the background
 {
     // load the image into memory using SDL_image library function
     Surface = IMG_Load("resources/board.png");
@@ -234,7 +234,7 @@ void makeBG()
     }
 }
 
-void makeMoves()
+void makeMoves() // Sets up make move pieces used to find which moves can be made
 {
     int i;
     // load the image into memory using SDL_image library function
@@ -268,7 +268,7 @@ void makeMoves()
     }
 }
 
-void makeBlack()
+void makeBlack() // Initializes the black piece setup with positions
 {
     Surface = IMG_Load("resources/black_piece.png");
     int i;
@@ -319,7 +319,7 @@ void makeBlack()
     }
 }
 
-void makeWhite()
+void makeWhite() // Initializes the White piece setup with positions
 {
     Surface = IMG_Load("resources/white_piece.png");
     int i;
@@ -373,6 +373,7 @@ void makeWhite()
 int bs(int element)
 {
     // Basic Binary Search of ranges
+    // Used to efficiently find which row or column the mouse is in
     int beg = 0, end = 7;
     int mid = (beg + end) / 2;
 
@@ -401,6 +402,7 @@ void select(int mouse_x, int mouse_y, int *select_x, int *select_y)
 
 void displayTint(int pieceNo, int color)
 {
+    // Displays the board along with a tint to indicate who's turn it is
     int i;
     // Clear the Window
     SDL_RenderClear(Rend);
@@ -414,7 +416,7 @@ void displayTint(int pieceNo, int color)
 
     switch (color)
     {
-    case 0:
+    case 0:         // Based on the color, it will render some parts first and others later for animation purposes
         for (i = 0; i < noOfBlacks; i++)
         {
             if (i == pieceNo)
@@ -444,7 +446,7 @@ void displayTint(int pieceNo, int color)
         SDL_RenderCopy(Rend, White_tex, NULL, &Whites[pieceNo]);
         SDL_SetTextureColorMod(White_tex, 255, 255, 255);
         break;
-    default:
+    default:        // If used normally, the complexity can be decreased
         for (i = 0; i < noOfWhites; i++)
         {
             SDL_RenderCopy(Rend, White_tex, NULL, &Whites[i]);
@@ -456,53 +458,6 @@ void displayTint(int pieceNo, int color)
     }
     // Upload Render to the Window
     SDL_RenderPresent(Rend);
-}
-
-void undo()
-{
-    int i, j;
-    if (back != NULL)
-    {
-        for (i = 0; i < 8; i++)
-        {
-            for (j = 0; j < 8; j++)
-            {
-                pos[i][j].color = back->pos[i][j].color;
-                pos[i][j].pieceNo = back->pos[i][j].pieceNo;
-                pos[i][j].x = back->pos[i][j].x;
-                pos[i][j].y = back->pos[i][j].y;
-                pos[i][j].King = back->pos[i][j].King;
-                noOfWhites = back->noOfWhites;
-                noOfBlacks = back->noOfBlacks;
-                turn = back->turn;
-                if (pos[i][j].color != -1)
-                {
-                    if (pos[i][j].color == 0)
-                    {
-                        Blacks[pos[i][j].pieceNo].x = pos[i][j].x - Blacks[pos[i][j].pieceNo].w / 2;
-                        Blacks[pos[i][j].pieceNo].y = pos[i][j].y - Blacks[pos[i][j].pieceNo].h / 2;
-                    }
-                    else
-                    {
-                        Whites[pos[i][j].pieceNo].x = pos[i][j].x - Whites[pos[i][j].pieceNo].w / 2;
-                        Whites[pos[i][j].pieceNo].y = pos[i][j].y - Whites[pos[i][j].pieceNo].h / 2;
-                    }
-                }
-            }
-        }
-        state temp = back;
-        if (back == front)
-        {
-            back = NULL;
-            front = NULL;
-        }
-        else
-        {
-            back = back->prev;
-        }
-        // Free Memory
-        free(temp);
-    }
 }
 
 int validMove(int x, int y, int select_x, int select_y)
@@ -573,6 +528,7 @@ int validMove(int x, int y, int select_x, int select_y)
 void findValidMoves(int valid[], int x, int y)
 {
     // Function to store an array with 1 at positions where movement is possible
+    // Uses validMove for its processes
     // Valid[0] - Take piece top left
     // Valid[1] - Move piece top left
     // Valid[2] - Move piece top right
@@ -634,23 +590,23 @@ int attackMode()
     int x, y, i, total = 0, valid[8] = {0};
     if (turn == 0)
     {
-        for (i = 0; i < noOfBlacks; i++)
+        for (i = 0; i < noOfBlacks; i++)    // Checking for jump moves for black pieces
         {
             select(Blacks[i].x, Blacks[i].y, &x, &y);
             findValidMoves(valid, x, y);
-            total += valid[0] + valid[3] + valid[4] + valid[7];
+            total += valid[0] + valid[3] + valid[4] + valid[7]; // These indexes store if a jump move is possible
         }
     }
     else if (turn == 1)
     {
-        for (i = 0; i < noOfWhites; i++)
+        for (i = 0; i < noOfWhites; i++)     // Checking for jump moves for white pieces
         {
             select(Whites[i].x, Whites[i].y, &x, &y);
             findValidMoves(valid, x, y);
-            total += valid[0] + valid[3] + valid[4] + valid[7];
+            total += valid[0] + valid[3] + valid[4] + valid[7]; // These indexes store if a jump move is possible
         }
     }
-    return total;
+    return total;   // The value returned will be non zero if a take piece move can be performed
 }
 
 void takePiece(int x, int y)
@@ -670,7 +626,8 @@ void takePiece(int x, int y)
         noOfWhites--;
     }
 
-    // Find the last element in the array to replace with
+    // Find the last element in the array of SDL_Rect to replace with
+    // This is done for GUI purposes
     for (i = 0; i < 8 && flag; i++)
     {
         for (j = 0; j < 8 && flag; j++)
@@ -710,8 +667,8 @@ void takePiece(int x, int y)
 
 int movementPossible(int color)
 {
-    // Part of the Victory Condition
-    // Checks is any move is possible by any piece of a given color
+    // Victory Condition
+    // Checks if any move is possible by any piece of a given color
     int valid[8], i, j, x, y, total = 0;
     if (color == 0)
     {
@@ -738,9 +695,11 @@ int movementPossible(int color)
 
 int isItValid(int x, int y, int select_x, int select_y, int attack)
 {
+    // Checks if a move that is being made is valid
     int validMoves[8] = {0};
     findValidMoves(validMoves, x, y);
 
+    // Checking the jump moves first because of priority
     if (validMoves[0] || validMoves[3] || validMoves[4] || validMoves[7])
     {
         if (validMoves[0] && x - select_x == 2 && y - select_y == 2)
@@ -788,6 +747,7 @@ int isItValid(int x, int y, int select_x, int select_y, int attack)
 
 void displayValidMoves(int pieceNo, int color, int x, int y, int attack)
 {
+    // Normal display tint function with added functionality to display next possible moves
     int validMoves[8] = {0}, i = 0;
 
     // Clear the Window
@@ -1017,6 +977,7 @@ void destroy()
 
 void makemove(int x, int y)
 {
+    // UI function that is accessed after selecting a piece
     int selection = 0, select_x = -1, select_y = -1, attack;
     attack = attackMode();
     while (!selection)
@@ -1060,6 +1021,7 @@ void makemove(int x, int y)
 
 void victoryDisplay(int color)
 {
+    // Function to display the victor after the condition for victory is attained
     SDL_RenderClear(Rend);
     // Write all image to the window
     // load the image into memory using SDL_image library function
@@ -1101,6 +1063,7 @@ void victoryDisplay(int color)
 
 void setPos(state curr)
 {
+    // Takes a state of the baord stored in memory and pushes it to the global displayed board variable
     int i, j;
 
     for (i = 0; i < 8; i++)
@@ -1134,6 +1097,7 @@ void setPos(state curr)
 
 int validMoveK(int x, int y, int select_x, int select_y, state curr)
 {
+    // Modified function of normal validMove function but for k moves
     // Most basic function in checking if a move is possible
     // Checking all take piece moves
     if (x - select_x == 2 && y - select_y == 2 && select_y > -1 && select_y < 8 && select_x > -1 && select_x < 8)
@@ -1199,6 +1163,7 @@ int validMoveK(int x, int y, int select_x, int select_y, state curr)
 
 void findValidMovesK(int valid[], int x, int y, state curr)
 {
+    // Modified function of normal findValidMoves function but for k moves
     // Function to store an array with 1 at positions where movement is possible
     // Valid[0] - Take piece top left
     // Valid[1] - Move piece top left
@@ -1257,6 +1222,7 @@ void findValidMovesK(int valid[], int x, int y, state curr)
 
 int attackModeK(state curr)
 {
+    // Modified function of normal attackMode function but for k moves
     // Checks the state of all pieces and whether an attack is possible
     int i, j, total = 0, valid[8] = {0};
     if (curr->turn == 0)
@@ -1290,58 +1256,9 @@ int attackModeK(state curr)
     return total;
 }
 
-int isItKValid(int x, int y, int select_x, int select_y, int attack, state curr)
-{
-    int validMoves[8] = {0};
-    findValidMovesK(validMoves, x, y, curr);
-
-    if (validMoves[0] || validMoves[3] || validMoves[4] || validMoves[7])
-    {
-        if (validMoves[0] && x - select_x == 2 && y - select_y == 2)
-        {
-            return 1;
-        }
-        if (validMoves[3] && select_x - x == 2 && y - select_y == 2)
-        {
-            return 1;
-        }
-        if (validMoves[4] && x - select_x == 2 && select_y - y == 2)
-        {
-            return 1;
-        }
-        if (validMoves[7] && select_x - x == 2 && select_y - y == 2)
-        {
-            return 1;
-        }
-    }
-
-    // Checks the remaining normal moves
-    else if (attack == 0)
-    {
-
-        if (validMoves[1] && x - select_x == 1 && y - select_y == 1)
-        {
-            return 1;
-        }
-        if (validMoves[2] && select_x - x == 1 && y - select_y == 1)
-        {
-            return 1;
-        }
-        if (validMoves[5] && x - select_x == 1 && select_y - y == 1)
-        {
-            return 1;
-        }
-        if (validMoves[6] && select_x - x == 1 && select_y - y == 1)
-        {
-            return 1;
-        }
-    }
-
-    return 0;
-}
-
 void copyPos(state curr, state to)
 {
+    // Copies one state stored in memory to another
     int i, j;
 
     for (i = 0; i < 8; i++)
@@ -1362,6 +1279,7 @@ void copyPos(state curr, state to)
 
 void review()
 {
+    // UI Function to go through the previous states of the game
     int quit = 0;
     state curr = front;
 
@@ -1403,6 +1321,7 @@ void review()
 
 void deletek()
 {
+    // Deletes the doubly linked list created by createkq for next k moves
     state temp = kfront;
     while (temp != NULL)
     {
@@ -1424,6 +1343,7 @@ void deletek()
 
 void createkq(state curr, int k)
 {
+    // Recursive function meant to go through k states or moves and finally add them to the doubly linked list
     if (k == 0)
     {
         state store = (state)malloc(sizeof(struct State));
@@ -1449,7 +1369,7 @@ void createkq(state curr, int k)
     else
     {
         int attack = attackModeK(curr), i, j, valid[8] = {0}, p, q, flag, check;
-        if (attack != 0)
+        if (attack != 0) // Checks if an attack is possible, then goes into those states
         {
             for (i = 0; i < 8; i++)
             {
@@ -1458,6 +1378,7 @@ void createkq(state curr, int k)
                     if (curr->pos[j][i].color == curr->turn)
                     {
                         findValidMovesK(valid, i, j, curr);
+                        // Checks the if an attack can be made in each direction, If true, then executes that move and calls recursively
                         if (valid[0] == 1)
                         {
                             state nextMove = (state)malloc(sizeof(struct State));
@@ -1499,14 +1420,17 @@ void createkq(state curr, int k)
 
                             state doubleCheck = (state)malloc(sizeof(struct State));
                             copyPos(nextMove, doubleCheck);
-                            if(doubleCheck->turn == 0){
+                            if (doubleCheck->turn == 0)
+                            {
                                 doubleCheck->turn = 1;
                             }
-                            else if(doubleCheck->turn == 1){
+                            else if (doubleCheck->turn == 1)
+                            {
                                 doubleCheck->turn = 0;
                             }
 
-                            if(attackModeK(doubleCheck) != 0){
+                            if (attackModeK(doubleCheck) != 0)
+                            {
                                 nextMove->turn = doubleCheck->turn;
                             }
 
@@ -1556,14 +1480,17 @@ void createkq(state curr, int k)
 
                             state doubleCheck = (state)malloc(sizeof(struct State));
                             copyPos(nextMove, doubleCheck);
-                            if(doubleCheck->turn == 0){
+                            if (doubleCheck->turn == 0)
+                            {
                                 doubleCheck->turn = 1;
                             }
-                            else if(doubleCheck->turn == 1){
+                            else if (doubleCheck->turn == 1)
+                            {
                                 doubleCheck->turn = 0;
                             }
 
-                            if(attackModeK(doubleCheck) != 0){
+                            if (attackModeK(doubleCheck) != 0)
+                            {
                                 nextMove->turn = doubleCheck->turn;
                             }
 
@@ -1613,14 +1540,17 @@ void createkq(state curr, int k)
 
                             state doubleCheck = (state)malloc(sizeof(struct State));
                             copyPos(nextMove, doubleCheck);
-                            if(doubleCheck->turn == 0){
+                            if (doubleCheck->turn == 0)
+                            {
                                 doubleCheck->turn = 1;
                             }
-                            else if(doubleCheck->turn == 1){
+                            else if (doubleCheck->turn == 1)
+                            {
                                 doubleCheck->turn = 0;
                             }
 
-                            if(attackModeK(doubleCheck) != 0){
+                            if (attackModeK(doubleCheck) != 0)
+                            {
                                 nextMove->turn = doubleCheck->turn;
                             }
 
@@ -1670,14 +1600,17 @@ void createkq(state curr, int k)
 
                             state doubleCheck = (state)malloc(sizeof(struct State));
                             copyPos(nextMove, doubleCheck);
-                            if(doubleCheck->turn == 0){
+                            if (doubleCheck->turn == 0)
+                            {
                                 doubleCheck->turn = 1;
                             }
-                            else if(doubleCheck->turn == 1){
+                            else if (doubleCheck->turn == 1)
+                            {
                                 doubleCheck->turn = 0;
                             }
 
-                            if(attackModeK(doubleCheck) != 0){
+                            if (attackModeK(doubleCheck) != 0)
+                            {
                                 nextMove->turn = doubleCheck->turn;
                             }
 
@@ -1690,7 +1623,7 @@ void createkq(state curr, int k)
                 }
             }
         }
-        else
+        else    // Simplified version of the above code for normal moves
         {
             for (i = 0; i < 8; i++)
             {
@@ -1792,12 +1725,14 @@ void createkq(state curr, int k)
 
 void kmoves()
 {
+    // UI Function to go through the next k moves
     int k, quit;
     state curr;
     printf("Enter the value of k(Please let it be under 3 or Laptop go Boom):\n");
     scanf("%d", &k);
     createkq(back, k);
     curr = kfront;
+    setPos(curr);
     while (!quit)
     {
         SDL_Event event;
@@ -1838,6 +1773,7 @@ void kmoves()
 
 void process()
 {
+    // The main function where the game lies
     // The function that combines everything
     int close_req = 0, select_x, select_y;
 
@@ -1886,7 +1822,7 @@ void process()
             case SDL_KEYDOWN:
                 if (event.key.keysym.sym == SDLK_u)
                 {
-                    undo();
+                    removeState();
                 }
                 else if (event.key.keysym.sym == SDLK_r)
                 {
