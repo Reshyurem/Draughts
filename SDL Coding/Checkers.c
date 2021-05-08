@@ -104,7 +104,7 @@ void init()
         for (j = 0; j < 8; j++)
         {
             pos[i][j].color = -1;
-            pos[i][j].King = 0;
+            pos[i][j].King = -1;
             pos[i][j].pieceNo = -1;
             pos[i][j].piece = NULL;
         }
@@ -536,6 +536,7 @@ void findValidMoves(int valid[], int x, int y)
 }
 
 int attackMode(){
+    // Checks the state of all pieces and whether an attack is possible
     int x, y, i, total = 0, valid[8] = { 0 };
     if(turn == 0){
         for(i = 0; i < noOfBlacks; i++){
@@ -849,7 +850,6 @@ void makemove(int x, int y)
                 break;
 
             case SDL_MOUSEBUTTONDOWN:
-                //displayValidMoves(x, y);
                 if (event.button.button == SDL_BUTTON_LEFT)
                 {                                                                 // Only true if the mouse is in the window and left button is clicked
                     select(event.button.x, event.button.y, &select_x, &select_y); // Assigns the row and column position mouse is currently in
