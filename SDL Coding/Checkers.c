@@ -51,6 +51,7 @@ struct State
 typedef struct State *state;
 
 state front = NULL, back = NULL;
+state kfront = NULL, kback = NULL;
 
 void addState()
 {
@@ -89,6 +90,50 @@ void addState()
         back->next = temp;
         back = temp;
     }
+}
+
+void removeState()
+{
+    int i, j;
+    for (i = 0; i < 8; i++)
+    {
+        for (j = 0; j < 8; j++)
+        {
+            pos[i][j].color = back->pos[i][j].color;
+            pos[i][j].pieceNo = back->pos[i][j].pieceNo;
+            pos[i][j].x = back->pos[i][j].x;
+            pos[i][j].y = back->pos[i][j].y;
+            pos[i][j].King = back->pos[i][j].King;
+            noOfWhites = back->noOfWhites;
+            noOfBlacks = back->noOfBlacks;
+            turn = back->turn;
+            if (pos[i][j].color != -1)
+            {
+                if (pos[i][j].color == 0)
+                {
+                    Blacks[pos[i][j].pieceNo].x = pos[i][j].x - Blacks[pos[i][j].pieceNo].w / 2;
+                    Blacks[pos[i][j].pieceNo].y = pos[i][j].y - Blacks[pos[i][j].pieceNo].h / 2;
+                }
+                else
+                {
+                    Whites[pos[i][j].pieceNo].x = pos[i][j].x - Whites[pos[i][j].pieceNo].w / 2;
+                    Whites[pos[i][j].pieceNo].y = pos[i][j].y - Whites[pos[i][j].pieceNo].h / 2;
+                }
+            }
+        }
+    }
+    state temp = back;
+    if (back == front)
+    {
+        back = NULL;
+        front = NULL;
+    }
+    else
+    {
+        back = back->prev;
+    }
+    // Free Memory
+    free(temp);
 }
 
 void uswapPos(struct Pos *a, struct Pos *b)
@@ -1022,7 +1067,7 @@ void victoryDisplay(int color)
     {
         Surface = IMG_Load("resources/black_victory.png");
     }
-    else if (color == 0)
+    else if (color == 1)
     {
         Surface = IMG_Load("resources/white_victory.png");
     }
@@ -1054,10 +1099,9 @@ void victoryDisplay(int color)
     SDL_RenderPresent(Rend);
 }
 
-void review()
+void setPos(state curr)
 {
-    int i, j, quit = 0;
-    state curr = front;
+    int i, j;
 
     for (i = 0; i < 8; i++)
     {
@@ -1086,6 +1130,242 @@ void review()
             }
         }
     }
+}
+
+int validMoveK(int x, int y, int select_x, int select_y, state curr)
+{
+    // Most basic function in checking if a move is possible
+    // Checking all take piece moves
+    if (x - select_x == 2 && y - select_y == 2 && select_y > -1 && select_y < 8 && select_x > -1 && select_x < 8)
+    {
+        if (curr->pos[y - 1][x - 1].color != curr->turn && curr->pos[y - 1][x - 1].color != -1 && curr->pos[select_y][select_x].pieceNo == -1 && ((curr->pos[y][x].color == 0) || (curr->pos[y][x].King == 1)))
+        {
+            return 1;
+        }
+    }
+    if (select_x - x == 2 && y - select_y == 2 && select_y > -1 && select_y < 8 && select_x > -1 && select_x < 8)
+    {
+        if (curr->pos[y - 1][x + 1].color != curr->turn && curr->pos[y - 1][x + 1].color != -1 && curr->pos[select_y][select_x].pieceNo == -1 && ((curr->pos[y][x].color == 0) || (curr->pos[y][x].King == 1)))
+        {
+            return 1;
+        }
+    }
+    if (x - select_x == 2 && select_y - y == 2 && select_y > -1 && select_y < 8 && select_x > -1 && select_x < 8)
+    {
+        if (curr->pos[y + 1][x - 1].color != curr->turn && curr->pos[y + 1][x - 1].color != -1 && curr->pos[select_y][select_x].pieceNo == -1 && ((curr->pos[y][x].color == 1) || (curr->pos[y][x].King == 1)))
+        {
+            return 1;
+        }
+    }
+    if (select_x - x == 2 && select_y - y == 2 && select_y > -1 && select_y < 8 && select_x > -1 && select_x < 8)
+    {
+        if (curr->pos[y + 1][x + 1].color != curr->turn && curr->pos[y + 1][x + 1].color != -1 && curr->pos[select_y][select_x].pieceNo == -1 && ((curr->pos[y][x].color == 1) || (curr->pos[y][x].King == 1)))
+        {
+            return 1;
+        }
+    }
+
+    // Checking all normal moves
+    if (select_x - x == 1 && y - select_y == 1 && select_y > -1 && select_y < 8 && select_x > -1 && select_x < 8)
+    {
+        if (curr->pos[select_y][select_x].pieceNo == -1 && ((curr->pos[y][x].color == 0) || (curr->pos[y][x].King == 1)))
+        {
+            return 1;
+        }
+    }
+    if (x - select_x == 1 && y - select_y == 1 && select_y > -1 && select_y < 8 && select_x > -1 && select_x < 8)
+    {
+        if (curr->pos[select_y][select_x].pieceNo == -1 && ((curr->pos[y][x].color == 0) || (curr->pos[y][x].King == 1)))
+        {
+            return 1;
+        }
+    }
+    if (select_x - x == 1 && select_y - y == 1 && select_y > -1 && select_y < 8 && select_x > -1 && select_x < 8)
+    {
+        if (curr->pos[select_y][select_x].pieceNo == -1 && ((curr->pos[y][x].color == 1) || (curr->pos[y][x].King == 1)))
+        {
+            return 1;
+        }
+    }
+    if (x - select_x == 1 && select_y - y == 1 && select_y > -1 && select_y < 8 && select_x > -1 && select_x < 8)
+    {
+        if (curr->pos[select_y][select_x].pieceNo == -1 && ((curr->pos[y][x].color == 1) || (curr->pos[y][x].King == 1)))
+        {
+            return 1;
+        }
+    }
+    return 0;
+}
+
+void findValidMovesK(int valid[], int x, int y, state curr)
+{
+    // Function to store an array with 1 at positions where movement is possible
+    // Valid[0] - Take piece top left
+    // Valid[1] - Move piece top left
+    // Valid[2] - Move piece top right
+    // Valid[3] - Take piece top right
+    // Valid[4] - Take piece bottom left
+    // Valid[5] - Move piece bottom left
+    // Valid[6] - Move piece bottom right
+    // Valid[7] - Take piece bottom right
+    int flag = 1, i;
+
+    for (i = 0; i < 8; i++)
+    {
+        valid[i] = 0;
+    }
+    if (validMoveK(x, y, x - 2, y - 2, curr) == 1)
+    {
+        valid[0] = 1;
+        flag = 0;
+    }
+    if (validMoveK(x, y, x + 2, y - 2, curr) == 1)
+    {
+        valid[3] = 1;
+        flag = 0;
+    }
+    if (validMoveK(x, y, x - 2, y + 2, curr) == 1)
+    {
+        valid[4] = 1;
+        flag = 0;
+    }
+    if (validMoveK(x, y, x + 2, y + 2, curr) == 1)
+    {
+        valid[7] = 1;
+        flag = 0;
+    }
+    if (flag)
+    {
+        if (validMoveK(x, y, x - 1, y - 1, curr) == 1)
+        {
+            valid[1] = 1;
+        }
+        if (validMoveK(x, y, x + 1, y - 1, curr) == 1)
+        {
+            valid[2] = 1;
+        }
+        if (validMoveK(x, y, x - 1, y + 1, curr) == 1)
+        {
+            valid[5] = 1;
+        }
+        if (validMoveK(x, y, x + 1, y + 1, curr) == 1)
+        {
+            valid[6] = 1;
+        }
+    }
+}
+
+int attackModeK(state curr)
+{
+    // Checks the state of all pieces and whether an attack is possible
+    int i, j, total = 0, valid[8] = {0};
+    if (curr->turn == 0)
+    {
+        for (i = 0; i < 8; i++)
+        {
+            for (j = 0; j < 8; j++)
+            {
+                if (curr->pos[i][j].color == curr->turn)
+                {
+                    findValidMovesK(valid, j, i, curr);
+                    total += valid[0] + valid[3] + valid[4] + valid[7];
+                }
+            }
+        }
+    }
+    else if (curr->turn == 1)
+    {
+        for (i = 0; i < 8; i++)
+        {
+            for (j = 0; j < 8; j++)
+            {
+                if (curr->pos[i][j].color == curr->turn)
+                {
+                    findValidMovesK(valid, j, i, curr);
+                    total += valid[0] + valid[3] + valid[4] + valid[7];
+                }
+            }
+        }
+    }
+    return total;
+}
+
+int isItKValid(int x, int y, int select_x, int select_y, int attack, state curr)
+{
+    int validMoves[8] = {0};
+    findValidMovesK(validMoves, x, y, curr);
+
+    if (validMoves[0] || validMoves[3] || validMoves[4] || validMoves[7])
+    {
+        if (validMoves[0] && x - select_x == 2 && y - select_y == 2)
+        {
+            return 1;
+        }
+        if (validMoves[3] && select_x - x == 2 && y - select_y == 2)
+        {
+            return 1;
+        }
+        if (validMoves[4] && x - select_x == 2 && select_y - y == 2)
+        {
+            return 1;
+        }
+        if (validMoves[7] && select_x - x == 2 && select_y - y == 2)
+        {
+            return 1;
+        }
+    }
+
+    // Checks the remaining normal moves
+    else if (attack == 0)
+    {
+
+        if (validMoves[1] && x - select_x == 1 && y - select_y == 1)
+        {
+            return 1;
+        }
+        if (validMoves[2] && select_x - x == 1 && y - select_y == 1)
+        {
+            return 1;
+        }
+        if (validMoves[5] && x - select_x == 1 && select_y - y == 1)
+        {
+            return 1;
+        }
+        if (validMoves[6] && select_x - x == 1 && select_y - y == 1)
+        {
+            return 1;
+        }
+    }
+
+    return 0;
+}
+
+void copyPos(state curr, state to)
+{
+    int i, j;
+
+    for (i = 0; i < 8; i++)
+    {
+        for (j = 0; j < 8; j++)
+        {
+            to->pos[i][j].color = curr->pos[i][j].color;
+            to->pos[i][j].pieceNo = curr->pos[i][j].pieceNo;
+            to->pos[i][j].x = curr->pos[i][j].x;
+            to->pos[i][j].y = curr->pos[i][j].y;
+            to->pos[i][j].King = curr->pos[i][j].King;
+            to->noOfWhites = curr->noOfWhites;
+            to->noOfBlacks = curr->noOfBlacks;
+            to->turn = curr->turn;
+        }
+    }
+}
+
+void review()
+{
+    int quit = 0;
+    state curr = front;
+
+    setPos(front);
 
     while (!quit)
     {
@@ -1104,67 +1384,15 @@ void review()
                 {
                     quit = 1;
                 }
-                else if (event.key.keysym.sym == SDLK_LEFT && curr != front)
+                else if ((event.key.keysym.sym == SDLK_LEFT || event.key.keysym.sym == SDLK_h) && curr != front)
                 {
                     curr = curr->prev;
-                    for (i = 0; i < 8; i++)
-                    {
-                        for (j = 0; j < 8; j++)
-                        {
-                            pos[i][j].color = curr->pos[i][j].color;
-                            pos[i][j].pieceNo = curr->pos[i][j].pieceNo;
-                            pos[i][j].x = curr->pos[i][j].x;
-                            pos[i][j].y = curr->pos[i][j].y;
-                            pos[i][j].King = curr->pos[i][j].King;
-                            noOfWhites = curr->noOfWhites;
-                            noOfBlacks = curr->noOfBlacks;
-                            turn = curr->turn;
-                            if (pos[i][j].color != -1)
-                            {
-                                if (pos[i][j].color == 0)
-                                {
-                                    Blacks[pos[i][j].pieceNo].x = pos[i][j].x - Blacks[pos[i][j].pieceNo].w / 2;
-                                    Blacks[pos[i][j].pieceNo].y = pos[i][j].y - Blacks[pos[i][j].pieceNo].h / 2;
-                                }
-                                else
-                                {
-                                    Whites[pos[i][j].pieceNo].x = pos[i][j].x - Whites[pos[i][j].pieceNo].w / 2;
-                                    Whites[pos[i][j].pieceNo].y = pos[i][j].y - Whites[pos[i][j].pieceNo].h / 2;
-                                }
-                            }
-                        }
-                    }
+                    setPos(curr);
                 }
-                else if (event.key.keysym.sym == SDLK_RIGHT && curr != back)
+                else if ((event.key.keysym.sym == SDLK_RIGHT || event.key.keysym.sym == SDLK_l) && curr != back)
                 {
                     curr = curr->next;
-                    for (i = 0; i < 8; i++)
-                    {
-                        for (j = 0; j < 8; j++)
-                        {
-                            pos[i][j].color = curr->pos[i][j].color;
-                            pos[i][j].pieceNo = curr->pos[i][j].pieceNo;
-                            pos[i][j].x = curr->pos[i][j].x;
-                            pos[i][j].y = curr->pos[i][j].y;
-                            pos[i][j].King = curr->pos[i][j].King;
-                            noOfWhites = curr->noOfWhites;
-                            noOfBlacks = curr->noOfBlacks;
-                            turn = curr->turn;
-                            if (pos[i][j].color != -1)
-                            {
-                                if (pos[i][j].color == 0)
-                                {
-                                    Blacks[pos[i][j].pieceNo].x = pos[i][j].x - Blacks[pos[i][j].pieceNo].w / 2;
-                                    Blacks[pos[i][j].pieceNo].y = pos[i][j].y - Blacks[pos[i][j].pieceNo].h / 2;
-                                }
-                                else
-                                {
-                                    Whites[pos[i][j].pieceNo].x = pos[i][j].x - Whites[pos[i][j].pieceNo].w / 2;
-                                    Whites[pos[i][j].pieceNo].y = pos[i][j].y - Whites[pos[i][j].pieceNo].h / 2;
-                                }
-                            }
-                        }
-                    }
+                    setPos(curr);
                 }
                 break;
             }
@@ -1173,10 +1401,445 @@ void review()
     }
 }
 
+void deletek()
+{
+    state temp = kfront;
+    while (temp != NULL)
+    {
+        if (kfront != kback)
+        {
+            kfront = kfront->next;
+            kfront->prev = NULL;
+            free(temp);
+        }
+        else if (kfront == kback && kfront != NULL)
+        {
+            kfront = NULL;
+            kback = NULL;
+            free(temp);
+        }
+        temp = kfront;
+    }
+}
+
+void createkq(state curr, int k)
+{
+    if (k == 0)
+    {
+        state store = (state)malloc(sizeof(struct State));
+        copyPos(curr, store);
+        if (kfront == kback && kfront == NULL)
+        {
+            kfront = store;
+            kback = store;
+        }
+        else if (kfront == kback)
+        {
+            kfront->next = store;
+            store->prev = kfront;
+            kback = store;
+        }
+        else
+        {
+            kback->next = store;
+            store->prev = kback;
+            kback = store;
+        }
+    }
+    else
+    {
+        int attack = attackModeK(curr), i, j, valid[8] = {0}, p, q, flag, check;
+        if (attack != 0)
+        {
+            for (i = 0; i < 8; i++)
+            {
+                for (j = 0; j < 8; j++)
+                {
+                    if (curr->pos[j][i].color == curr->turn)
+                    {
+                        findValidMovesK(valid, i, j, curr);
+                        if (valid[0] == 1)
+                        {
+                            state nextMove = (state)malloc(sizeof(struct State));
+                            copyPos(curr, nextMove);
+                            nextMove->pos[j - 2][i - 2].color = nextMove->pos[j][i].color;
+                            nextMove->pos[j - 2][i - 2].King = nextMove->pos[j][i].King;
+                            nextMove->pos[j - 2][i - 2].pieceNo = nextMove->pos[j][i].pieceNo;
+                            nextMove->pos[j][i].color = -1;
+                            nextMove->pos[j][i].King = -1;
+                            nextMove->pos[j][i].pieceNo = -1;
+                            if (nextMove->turn == 0)
+                            {
+                                nextMove->noOfWhites--;
+                                check = nextMove->noOfWhites;
+                                nextMove->turn = 1;
+                            }
+                            else if (nextMove->turn == 1)
+                            {
+                                nextMove->noOfBlacks--;
+                                check = nextMove->noOfBlacks;
+                                nextMove->turn = 0;
+                            }
+                            flag = 1;
+
+                            for (p = 0; p < 8 && flag == 1; p++)
+                            {
+                                for (q = 0; q < 8 && flag == 1; q++)
+                                {
+                                    if (nextMove->pos[q][p].color == nextMove->turn && nextMove->pos[q][p].pieceNo == check)
+                                    {
+                                        nextMove->pos[q][p].pieceNo = nextMove->pos[j - 1][i - 1].pieceNo;
+                                        nextMove->pos[j - 1][i - 1].color = -1;
+                                        nextMove->pos[j - 1][i - 1].King = -1;
+                                        nextMove->pos[j - 1][i - 1].pieceNo = -1;
+                                        flag = 0;
+                                    }
+                                }
+                            }
+
+                            state doubleCheck = (state)malloc(sizeof(struct State));
+                            copyPos(nextMove, doubleCheck);
+                            if(doubleCheck->turn == 0){
+                                doubleCheck->turn = 1;
+                            }
+                            else if(doubleCheck->turn == 1){
+                                doubleCheck->turn = 0;
+                            }
+
+                            if(attackModeK(doubleCheck) != 0){
+                                nextMove->turn = doubleCheck->turn;
+                            }
+
+                            free(doubleCheck);
+
+                            createkq(nextMove, k - 1);
+                            free(nextMove);
+                        }
+                        if (valid[3] == 1)
+                        {
+                            state nextMove = (state)malloc(sizeof(struct State));
+                            copyPos(curr, nextMove);
+                            nextMove->pos[j - 2][i + 2].color = nextMove->pos[j][i].color;
+                            nextMove->pos[j - 2][i + 2].King = nextMove->pos[j][i].King;
+                            nextMove->pos[j - 2][i + 2].pieceNo = nextMove->pos[j][i].pieceNo;
+                            nextMove->pos[j][i].color = -1;
+                            nextMove->pos[j][i].King = -1;
+                            nextMove->pos[j][i].pieceNo = -1;
+                            if (nextMove->turn == 0)
+                            {
+                                nextMove->noOfWhites--;
+                                check = nextMove->noOfWhites;
+                                nextMove->turn = 1;
+                            }
+                            else if (nextMove->turn == 1)
+                            {
+                                nextMove->noOfBlacks--;
+                                check = nextMove->noOfBlacks;
+                                nextMove->turn = 0;
+                            }
+                            flag = 1;
+
+                            for (p = 0; p < 8 && flag == 1; p++)
+                            {
+                                for (q = 0; q < 8 && flag == 1; q++)
+                                {
+                                    if (nextMove->pos[q][p].color == nextMove->turn && nextMove->pos[q][p].pieceNo == check)
+                                    {
+                                        nextMove->pos[q][p].pieceNo = nextMove->pos[j - 1][i + 1].pieceNo;
+                                        nextMove->pos[j - 1][i + 1].color = -1;
+                                        nextMove->pos[j - 1][i + 1].King = -1;
+                                        nextMove->pos[j - 1][i + 1].pieceNo = -1;
+                                        flag = 0;
+                                    }
+                                }
+                            }
+
+                            state doubleCheck = (state)malloc(sizeof(struct State));
+                            copyPos(nextMove, doubleCheck);
+                            if(doubleCheck->turn == 0){
+                                doubleCheck->turn = 1;
+                            }
+                            else if(doubleCheck->turn == 1){
+                                doubleCheck->turn = 0;
+                            }
+
+                            if(attackModeK(doubleCheck) != 0){
+                                nextMove->turn = doubleCheck->turn;
+                            }
+
+                            free(doubleCheck);
+
+                            createkq(nextMove, k - 1);
+                            free(nextMove);
+                        }
+                        if (valid[4] == 1)
+                        {
+                            state nextMove = (state)malloc(sizeof(struct State));
+                            copyPos(curr, nextMove);
+                            nextMove->pos[j + 2][i - 2].color = nextMove->pos[j][i].color;
+                            nextMove->pos[j + 2][i - 2].King = nextMove->pos[j][i].King;
+                            nextMove->pos[j + 2][i - 2].pieceNo = nextMove->pos[j][i].pieceNo;
+                            nextMove->pos[j][i].color = -1;
+                            nextMove->pos[j][i].King = -1;
+                            nextMove->pos[j][i].pieceNo = -1;
+                            if (nextMove->turn == 0)
+                            {
+                                nextMove->noOfWhites--;
+                                check = nextMove->noOfWhites;
+                                nextMove->turn = 1;
+                            }
+                            else if (nextMove->turn == 1)
+                            {
+                                nextMove->noOfBlacks--;
+                                check = nextMove->noOfBlacks;
+                                nextMove->turn = 0;
+                            }
+                            flag = 1;
+
+                            for (p = 0; p < 8 && flag == 1; p++)
+                            {
+                                for (q = 0; q < 8 && flag == 1; q++)
+                                {
+                                    if (nextMove->pos[q][p].color == nextMove->turn && nextMove->pos[q][p].pieceNo == check)
+                                    {
+                                        nextMove->pos[q][p].pieceNo = nextMove->pos[j + 1][i - 1].pieceNo;
+                                        nextMove->pos[j + 1][i - 1].color = -1;
+                                        nextMove->pos[j + 1][i - 1].King = -1;
+                                        nextMove->pos[j + 1][i - 1].pieceNo = -1;
+                                        flag = 0;
+                                    }
+                                }
+                            }
+
+                            state doubleCheck = (state)malloc(sizeof(struct State));
+                            copyPos(nextMove, doubleCheck);
+                            if(doubleCheck->turn == 0){
+                                doubleCheck->turn = 1;
+                            }
+                            else if(doubleCheck->turn == 1){
+                                doubleCheck->turn = 0;
+                            }
+
+                            if(attackModeK(doubleCheck) != 0){
+                                nextMove->turn = doubleCheck->turn;
+                            }
+
+                            free(doubleCheck);
+
+                            createkq(nextMove, k - 1);
+                            free(nextMove);
+                        }
+                        if (valid[7] == 1)
+                        {
+                            state nextMove = (state)malloc(sizeof(struct State));
+                            copyPos(curr, nextMove);
+                            nextMove->pos[j + 2][i + 2].color = nextMove->pos[j][i].color;
+                            nextMove->pos[j + 2][i + 2].King = nextMove->pos[j][i].King;
+                            nextMove->pos[j + 2][i + 2].pieceNo = nextMove->pos[j][i].pieceNo;
+                            nextMove->pos[j][i].color = -1;
+                            nextMove->pos[j][i].King = -1;
+                            nextMove->pos[j][i].pieceNo = -1;
+                            if (nextMove->turn == 0)
+                            {
+                                nextMove->noOfWhites--;
+                                check = nextMove->noOfWhites;
+                                nextMove->turn = 1;
+                            }
+                            else if (nextMove->turn == 1)
+                            {
+                                nextMove->noOfBlacks--;
+                                check = nextMove->noOfBlacks;
+                                nextMove->turn = 0;
+                            }
+                            flag = 1;
+
+                            for (p = 0; p < 8 && flag == 1; p++)
+                            {
+                                for (q = 0; q < 8 && flag == 1; q++)
+                                {
+                                    if (nextMove->pos[q][p].color == nextMove->turn && nextMove->pos[q][p].pieceNo == check)
+                                    {
+                                        nextMove->pos[q][p].pieceNo = nextMove->pos[j + 1][i + 1].pieceNo;
+                                        nextMove->pos[j + 1][i + 1].color = -1;
+                                        nextMove->pos[j + 1][i + 1].King = -1;
+                                        nextMove->pos[j + 1][i + 1].pieceNo = -1;
+                                        flag = 0;
+                                    }
+                                }
+                            }
+
+                            state doubleCheck = (state)malloc(sizeof(struct State));
+                            copyPos(nextMove, doubleCheck);
+                            if(doubleCheck->turn == 0){
+                                doubleCheck->turn = 1;
+                            }
+                            else if(doubleCheck->turn == 1){
+                                doubleCheck->turn = 0;
+                            }
+
+                            if(attackModeK(doubleCheck) != 0){
+                                nextMove->turn = doubleCheck->turn;
+                            }
+
+                            free(doubleCheck);
+
+                            createkq(nextMove, k - 1);
+                            free(nextMove);
+                        }
+                    }
+                }
+            }
+        }
+        else
+        {
+            for (i = 0; i < 8; i++)
+            {
+                for (j = 0; j < 8; j++)
+                {
+                    if (curr->pos[j][i].color == curr->turn)
+                    {
+                        findValidMovesK(valid, i, j, curr);
+                        if (valid[1] == 1)
+                        {
+                            state nextMove = (state)malloc(sizeof(struct State));
+                            copyPos(curr, nextMove);
+                            nextMove->pos[j - 1][i - 1].color = nextMove->pos[j][i].color;
+                            nextMove->pos[j - 1][i - 1].King = nextMove->pos[j][i].King;
+                            nextMove->pos[j - 1][i - 1].pieceNo = nextMove->pos[j][i].pieceNo;
+                            nextMove->pos[j][i].color = -1;
+                            nextMove->pos[j][i].King = -1;
+                            nextMove->pos[j][i].pieceNo = -1;
+                            if (nextMove->turn == 0)
+                            {
+                                nextMove->turn = 1;
+                            }
+                            else if (nextMove->turn == 1)
+                            {
+                                nextMove->turn = 0;
+                            }
+                            createkq(nextMove, k - 1);
+                            free(nextMove);
+                        }
+                        if (valid[2] == 1)
+                        {
+                            state nextMove = (state)malloc(sizeof(struct State));
+                            copyPos(curr, nextMove);
+                            nextMove->pos[j - 1][i + 1].color = nextMove->pos[j][i].color;
+                            nextMove->pos[j - 1][i + 1].King = nextMove->pos[j][i].King;
+                            nextMove->pos[j - 1][i + 1].pieceNo = nextMove->pos[j][i].pieceNo;
+                            nextMove->pos[j][i].color = -1;
+                            nextMove->pos[j][i].King = -1;
+                            nextMove->pos[j][i].pieceNo = -1;
+                            if (nextMove->turn == 0)
+                            {
+                                nextMove->turn = 1;
+                            }
+                            else if (nextMove->turn == 1)
+                            {
+                                nextMove->turn = 0;
+                            }
+                            createkq(nextMove, k - 1);
+                            free(nextMove);
+                        }
+                        if (valid[5] == 1)
+                        {
+                            state nextMove = (state)malloc(sizeof(struct State));
+                            copyPos(curr, nextMove);
+                            nextMove->pos[j + 1][i - 1].color = nextMove->pos[j][i].color;
+                            nextMove->pos[j + 1][i - 1].King = nextMove->pos[j][i].King;
+                            nextMove->pos[j + 1][i - 1].pieceNo = nextMove->pos[j][i].pieceNo;
+                            nextMove->pos[j][i].color = -1;
+                            nextMove->pos[j][i].King = -1;
+                            nextMove->pos[j][i].pieceNo = -1;
+                            if (nextMove->turn == 0)
+                            {
+                                nextMove->turn = 1;
+                            }
+                            else if (nextMove->turn == 1)
+                            {
+                                nextMove->turn = 0;
+                            }
+                            createkq(nextMove, k - 1);
+                            free(nextMove);
+                        }
+                        if (valid[6] == 1)
+                        {
+                            state nextMove = (state)malloc(sizeof(struct State));
+                            copyPos(curr, nextMove);
+                            nextMove->pos[j + 1][i + 1].color = nextMove->pos[j][i].color;
+                            nextMove->pos[j + 1][i + 1].King = nextMove->pos[j][i].King;
+                            nextMove->pos[j + 1][i + 1].pieceNo = nextMove->pos[j][i].pieceNo;
+                            nextMove->pos[j][i].color = -1;
+                            nextMove->pos[j][i].King = -1;
+                            nextMove->pos[j][i].pieceNo = -1;
+                            if (nextMove->turn == 0)
+                            {
+                                nextMove->turn = 1;
+                            }
+                            else if (nextMove->turn == 1)
+                            {
+                                nextMove->turn = 0;
+                            }
+                            createkq(nextMove, k - 1);
+                            free(nextMove);
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+void kmoves()
+{
+    int k, quit;
+    state curr;
+    printf("Enter the value of k(Please let it be under 3 or Laptop go Boom):\n");
+    scanf("%d", &k);
+    createkq(back, k);
+    curr = kfront;
+    while (!quit)
+    {
+        SDL_Event event;
+        while (SDL_PollEvent(&event)) // If there is an event, it is then assigned to event and becomes true
+        {
+            switch (event.type)
+            {
+            case SDL_QUIT: // If the event was a quit window event
+                deletek();
+                destroy();
+                exit(0);
+                break;
+
+            case SDL_KEYDOWN:                       // If a keyboard button is pressed
+                if (event.key.keysym.sym == SDLK_x) // If said button is x
+                {
+                    deletek();
+                    quit = 1;
+                }
+                // Vim for fun
+                else if ((event.key.keysym.sym == SDLK_LEFT || event.key.keysym.sym == SDLK_h) && curr != kfront) // If said button is Left Arrow Key or h
+                {
+                    curr = curr->prev;
+                    setPos(curr);
+                }
+                else if ((event.key.keysym.sym == SDLK_RIGHT || event.key.keysym.sym == SDLK_l) && curr != kback) // If said button is Right Arrow Key or l
+                {
+                    curr = curr->next;
+                    setPos(curr);
+                }
+                break;
+            }
+        }
+        displayTint(-1, -1); // Refreshes the display
+    }
+    deletek();
+}
+
 void process()
 {
     // The function that combines everything
-    int close_req = 0, select_x, select_y, i, j;
+    int close_req = 0, select_x, select_y;
 
     init();
 
@@ -1229,45 +1892,13 @@ void process()
                 {
                     addState();
                     review();
-                    for (i = 0; i < 8; i++)
-                    {
-                        for (j = 0; j < 8; j++)
-                        {
-                            pos[i][j].color = back->pos[i][j].color;
-                            pos[i][j].pieceNo = back->pos[i][j].pieceNo;
-                            pos[i][j].x = back->pos[i][j].x;
-                            pos[i][j].y = back->pos[i][j].y;
-                            pos[i][j].King = back->pos[i][j].King;
-                            noOfWhites = back->noOfWhites;
-                            noOfBlacks = back->noOfBlacks;
-                            turn = back->turn;
-                            if (pos[i][j].color != -1)
-                            {
-                                if (pos[i][j].color == 0)
-                                {
-                                    Blacks[pos[i][j].pieceNo].x = pos[i][j].x - Blacks[pos[i][j].pieceNo].w / 2;
-                                    Blacks[pos[i][j].pieceNo].y = pos[i][j].y - Blacks[pos[i][j].pieceNo].h / 2;
-                                }
-                                else
-                                {
-                                    Whites[pos[i][j].pieceNo].x = pos[i][j].x - Whites[pos[i][j].pieceNo].w / 2;
-                                    Whites[pos[i][j].pieceNo].y = pos[i][j].y - Whites[pos[i][j].pieceNo].h / 2;
-                                }
-                            }
-                        }
-                    }
-                    state temp = back;
-                    if (back == front)
-                    {
-                        back = NULL;
-                        front = NULL;
-                    }
-                    else
-                    {
-                        back = back->prev;
-                    }
-                    // Free Memory
-                    free(temp);
+                    removeState();
+                }
+                else if (event.key.keysym.sym == SDLK_k)
+                {
+                    addState();
+                    kmoves();
+                    removeState();
                 }
                 break;
             }
