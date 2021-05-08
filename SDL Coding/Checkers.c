@@ -489,7 +489,11 @@ void findValidMoves(int valid[], int x, int y)
     // Valid[5] - Move piece bottom left
     // Valid[6] - Move piece bottom right
     // Valid[7] - Take piece bottom right
-    int flag = 1;
+    int flag = 1, i;
+
+    for(i = 0; i < 8; i++){
+        valid[i] = 0;
+    }
     if (validMove(x, y, x - 2, y - 2) == 1)
     {
         valid[0] = 1;
@@ -531,7 +535,26 @@ void findValidMoves(int valid[], int x, int y)
     }
 }
 
-int isItValid(int x, int y, int select_x, int select_y)
+int attackMode(){
+    int x, y, i, total = 0, valid[8] = { 0 };
+    if(turn == 0){
+        for(i = 0; i < noOfBlacks; i++){
+            select(Blacks[i].x, Blacks[i].y, &x, &y);
+            findValidMoves(valid, x, y);
+            total += valid[0] + valid[3] + valid[4] + valid[7];
+        }
+    }
+    else if(turn == 1){
+        for(i = 0; i < noOfWhites; i++){
+            select(Whites[i].x, Whites[i].y, &x, &y);
+            findValidMoves(valid, x, y);
+            total += valid[0] + valid[3] + valid[4] + valid[7];
+        }
+    }
+    return total;
+}
+
+int isItValid(int x, int y, int select_x, int select_y, int attack)
 {
     int validMoves[8] = { 0 };
     findValidMoves(validMoves, x, y);
@@ -558,7 +581,7 @@ int isItValid(int x, int y, int select_x, int select_y)
     }
 
     // Checks the remaining normal moves
-    else
+    else if(attack == 0)
     {
 
         if (validMoves[1] && x - select_x == 1 && y - select_y == 1)
@@ -582,7 +605,7 @@ int isItValid(int x, int y, int select_x, int select_y)
     return 0;
 }
 
-void displayValidMoves(int pieceNo, int color, int x, int y)
+void displayValidMoves(int pieceNo, int color, int x, int y, int attack)
 {
     int validMoves[8] = {0}, i = 0;
 
@@ -681,7 +704,7 @@ void displayValidMoves(int pieceNo, int color, int x, int y)
     }
 
     // Checks the remaining normal moves
-    else
+    else if(attack == 0)
     {
         SDL_SetTextureColorMod(Nothing, 48, 232, 191);
         if (validMoves[1])
@@ -810,7 +833,8 @@ void destroy()
 
 void makemove(int x, int y)
 {
-    int undo = 0, select_x = -1, select_y = -1;
+    int undo = 0, select_x = -1, select_y = -1, attack;
+    attack = attackMode();
     while (!undo)
     {
         // Checking events
@@ -833,7 +857,7 @@ void makemove(int x, int y)
                     {
                         undo = 1;
                     }
-                    else if (pos[select_y][select_x].color == -1 && isItValid(x, y, select_x, select_y))
+                    else if (pos[select_y][select_x].color == -1 && isItValid(x, y, select_x, select_y, attack))
                     {
                         move(pos[y][x].pieceNo, pos[y][x].color, select_x, select_y);
                         if (turn == 0)
@@ -846,7 +870,7 @@ void makemove(int x, int y)
                 break;
             }
         }
-        displayValidMoves(pos[y][x].pieceNo, pos[y][x].color, x, y);
+        displayValidMoves(pos[y][x].pieceNo, pos[y][x].color, x, y, attack);
         // Refreshes the display
     }
 }
