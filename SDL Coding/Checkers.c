@@ -13,6 +13,7 @@
 SDL_Window *Window;
 SDL_Renderer *Rend;
 SDL_Surface *Surface;
+SDL_Texture *Piece;
 SDL_Texture *Bg;
 SDL_Texture *Black_tex;
 SDL_Texture *White_tex;
@@ -21,6 +22,9 @@ SDL_Texture *Victory;
 SDL_Rect Moves[4];
 SDL_Rect Blacks[12];
 SDL_Rect Whites[12];
+
+char blackPiece[30] = "resources/pieces/";
+char whitePiece[30] = "resources/pieces/";
 
 int turn = 0;
 
@@ -270,7 +274,7 @@ void makeMoves() // Sets up make move pieces used to find which moves can be mad
 
 void makeBlack() // Initializes the black piece setup with positions
 {
-    Surface = IMG_Load("resources/black_piece.png");
+    Surface = IMG_Load(blackPiece);
     int i;
     if (!Surface)
     {
@@ -321,7 +325,7 @@ void makeBlack() // Initializes the black piece setup with positions
 
 void makeWhite() // Initializes the White piece setup with positions
 {
-    Surface = IMG_Load("resources/white_piece.png");
+    Surface = IMG_Load(whitePiece);
     int i;
     if (!Surface)
     {
@@ -961,13 +965,11 @@ void move(int pieceNo, int color, int x, int y)
 void destroy()
 {
     // Destroy all textures and renderers and windows
-    int i;
     SDL_DestroyTexture(Bg);
-    for (i = 0; i < 12; i++)
-    {
-        SDL_DestroyTexture(Black_tex);
-        SDL_DestroyTexture(White_tex);
-    }
+    SDL_DestroyTexture(Black_tex);
+    SDL_DestroyTexture(White_tex);
+    SDL_DestroyTexture(Nothing);
+    SDL_DestroyTexture(Victory);
 
     SDL_DestroyRenderer(Rend);
     SDL_DestroyWindow(Window);
@@ -1771,6 +1773,52 @@ void kmoves()
     deletek();
 }
 
+void choosePiece(){
+    // load the image into memory using SDL_image library function
+    Surface = IMG_Load("resources/Pokeball.png");
+    if (!Surface)
+    {
+        printf("error creating surface\n");
+        SDL_DestroyRenderer(Rend);
+        SDL_DestroyWindow(Window);
+        SDL_Quit();
+        exit(1);
+    }
+
+    // load the image data into the graphics hardware's memory
+    Piece = SDL_CreateTextureFromSurface(Rend, Surface);
+    SDL_FreeSurface(Surface);
+    if (!Piece)
+    {
+        printf("error creating texture: %s\n", SDL_GetError());
+        SDL_DestroyRenderer(Rend);
+        SDL_DestroyWindow(Window);
+        SDL_Quit();
+        exit(1);
+    }
+
+    SDL_RenderClear(Rend);
+    SDL_RenderCopy(Rend, Piece, NULL, NULL);
+    SDL_RenderPresent(Rend);
+
+    char b[10], w[10];
+    do{
+    printf("\nBlack Player:\nChoose an icon to use(Use first character for row and second character for column)\n");
+    scanf("%s", b);
+    }while(strlen(b) == 2 && strcmp(b, "aa") <= 0 && strcmp(b, "ee") >= 0);
+
+    strcat(blackPiece, b);
+    strcat(blackPiece, ".png");
+
+    do{
+    printf("\nWhite Player:\nChoose an icon to use(Use first character for row and second character for column)\n");
+    scanf("%s", w);
+    }while(strlen(w) == 2 && strcmp(w, "aa") <= 0 && strcmp(w, "ee") >= 0 && strcmp(b, w) != 0);
+
+    strcat(whitePiece, w);
+    strcat(whitePiece, ".png");
+}
+
 void process()
 {
     // The main function where the game lies
@@ -1778,6 +1826,8 @@ void process()
     int close_req = 0, select_x, select_y;
 
     init();
+
+    choosePiece();
 
     makeBG();
     makeMoves();
