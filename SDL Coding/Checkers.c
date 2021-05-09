@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <assert.h>
 #include <malloc.h>
+#include <string.h>
 #include <math.h>
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_timer.h>
@@ -1947,6 +1948,8 @@ void process()
                 else if (event.key.keysym.sym == SDLK_d)
                 {
                     victoryDisplay(2);
+                    SDL_Delay(15000);
+                    close_req = 1;
                 }
                 break;
             }
