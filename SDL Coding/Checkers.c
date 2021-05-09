@@ -420,7 +420,7 @@ void displayTint(int pieceNo, int color)
 
     switch (color)
     {
-    case 0:         // Based on the color, it will render some parts first and others later for animation purposes
+    case 0: // Based on the color, it will render some parts first and others later for animation purposes
         for (i = 0; i < noOfBlacks; i++)
         {
             if (i == pieceNo)
@@ -450,7 +450,7 @@ void displayTint(int pieceNo, int color)
         SDL_RenderCopy(Rend, White_tex, NULL, &Whites[pieceNo]);
         SDL_SetTextureColorMod(White_tex, 255, 255, 255);
         break;
-    default:        // If used normally, the complexity can be decreased
+    default: // If used normally, the complexity can be decreased
         for (i = 0; i < noOfWhites; i++)
         {
             SDL_RenderCopy(Rend, White_tex, NULL, &Whites[i]);
@@ -594,7 +594,7 @@ int attackMode()
     int x, y, i, total = 0, valid[8] = {0};
     if (turn == 0)
     {
-        for (i = 0; i < noOfBlacks; i++)    // Checking for jump moves for black pieces
+        for (i = 0; i < noOfBlacks; i++) // Checking for jump moves for black pieces
         {
             select(Blacks[i].x, Blacks[i].y, &x, &y);
             findValidMoves(valid, x, y);
@@ -603,14 +603,14 @@ int attackMode()
     }
     else if (turn == 1)
     {
-        for (i = 0; i < noOfWhites; i++)     // Checking for jump moves for white pieces
+        for (i = 0; i < noOfWhites; i++) // Checking for jump moves for white pieces
         {
             select(Whites[i].x, Whites[i].y, &x, &y);
             findValidMoves(valid, x, y);
             total += valid[0] + valid[3] + valid[4] + valid[7]; // These indexes store if a jump move is possible
         }
     }
-    return total;   // The value returned will be non zero if a take piece move can be performed
+    return total; // The value returned will be non zero if a take piece move can be performed
 }
 
 void takePiece(int x, int y)
@@ -926,7 +926,13 @@ void move(int pieceNo, int color, int x, int y)
         else if (x - currx == 2 && y - curry == 2)
             takePiece(x - 1, y - 1);
         if (y == 0)
+        {
             pos[y][x].King = 1;
+            if (attackMode() != 0)
+            {
+                turn = 0;
+            }
+        }
     }
     else if (color == 1)
     {
@@ -958,7 +964,13 @@ void move(int pieceNo, int color, int x, int y)
         else if (x - currx == 2 && y - curry == 2)
             takePiece(x - 1, y - 1);
         if (y == 7)
+        {
             pos[y][x].King = 1;
+            if (attackMode() != 0)
+            {
+                turn = 1;
+            }
+        }
     }
 }
 
@@ -1034,6 +1046,10 @@ void victoryDisplay(int color)
     else if (color == 1)
     {
         Surface = IMG_Load("resources/white_victory.png");
+    }
+    else if (color == 2)
+    {
+        Surface = IMG_Load("resources/draw.png");
     }
     if (!Surface)
     {
@@ -1370,7 +1386,7 @@ void createkq(state curr, int k)
     }
     else
     {
-        int attack = attackModeK(curr), i, j, valid[8] = {0}, p, q, flag, check;
+        int attack = attackModeK(curr), i, j, valid[8] = {0}, p, q, flag, check, kingrow = 0;
         if (attack != 0) // Checks if an attack is possible, then goes into those states
         {
             for (i = 0; i < 8; i++)
@@ -1388,6 +1404,11 @@ void createkq(state curr, int k)
                             nextMove->pos[j - 2][i - 2].color = nextMove->pos[j][i].color;
                             nextMove->pos[j - 2][i - 2].King = nextMove->pos[j][i].King;
                             nextMove->pos[j - 2][i - 2].pieceNo = nextMove->pos[j][i].pieceNo;
+                            if (nextMove->pos[j - 2][i - 2].color == 0 && j - 2 == 0 && nextMove->pos[j - 2][i - 2].King == 0)
+                            {
+                                nextMove->pos[j - 2][i - 2].King = 1;
+                                kingrow = 1;
+                            }
                             nextMove->pos[j][i].color = -1;
                             nextMove->pos[j][i].King = -1;
                             nextMove->pos[j][i].pieceNo = -1;
@@ -1431,12 +1452,13 @@ void createkq(state curr, int k)
                                 doubleCheck->turn = 0;
                             }
 
-                            if (attackModeK(doubleCheck) != 0)
+                            if (attackModeK(doubleCheck) != 0 && kingrow == 0)
                             {
                                 nextMove->turn = doubleCheck->turn;
                             }
 
                             free(doubleCheck);
+                            kingrow = 0;
 
                             createkq(nextMove, k - 1);
                             free(nextMove);
@@ -1448,6 +1470,11 @@ void createkq(state curr, int k)
                             nextMove->pos[j - 2][i + 2].color = nextMove->pos[j][i].color;
                             nextMove->pos[j - 2][i + 2].King = nextMove->pos[j][i].King;
                             nextMove->pos[j - 2][i + 2].pieceNo = nextMove->pos[j][i].pieceNo;
+                            if (nextMove->pos[j - 2][i + 2].color == 0 && j - 2 == 0 && nextMove->pos[j - 2][i + 2].King == 0)
+                            {
+                                nextMove->pos[j - 2][i + 2].King = 1;
+                                kingrow = 1;
+                            }
                             nextMove->pos[j][i].color = -1;
                             nextMove->pos[j][i].King = -1;
                             nextMove->pos[j][i].pieceNo = -1;
@@ -1491,12 +1518,13 @@ void createkq(state curr, int k)
                                 doubleCheck->turn = 0;
                             }
 
-                            if (attackModeK(doubleCheck) != 0)
+                            if (attackModeK(doubleCheck) != 0 && kingrow == 0)
                             {
                                 nextMove->turn = doubleCheck->turn;
                             }
 
                             free(doubleCheck);
+                            kingrow = 0;
 
                             createkq(nextMove, k - 1);
                             free(nextMove);
@@ -1508,6 +1536,11 @@ void createkq(state curr, int k)
                             nextMove->pos[j + 2][i - 2].color = nextMove->pos[j][i].color;
                             nextMove->pos[j + 2][i - 2].King = nextMove->pos[j][i].King;
                             nextMove->pos[j + 2][i - 2].pieceNo = nextMove->pos[j][i].pieceNo;
+                            if (nextMove->pos[j + 2][i - 2].color == 1 && j + 2 == 7 && nextMove->pos[j + 2][i - 2].King == 0)
+                            {
+                                nextMove->pos[j + 2][i - 2].King = 1;
+                                kingrow = 1;
+                            }
                             nextMove->pos[j][i].color = -1;
                             nextMove->pos[j][i].King = -1;
                             nextMove->pos[j][i].pieceNo = -1;
@@ -1551,12 +1584,13 @@ void createkq(state curr, int k)
                                 doubleCheck->turn = 0;
                             }
 
-                            if (attackModeK(doubleCheck) != 0)
+                            if (attackModeK(doubleCheck) != 0 && kingrow == 0)
                             {
                                 nextMove->turn = doubleCheck->turn;
                             }
 
                             free(doubleCheck);
+                            kingrow = 0;
 
                             createkq(nextMove, k - 1);
                             free(nextMove);
@@ -1568,6 +1602,10 @@ void createkq(state curr, int k)
                             nextMove->pos[j + 2][i + 2].color = nextMove->pos[j][i].color;
                             nextMove->pos[j + 2][i + 2].King = nextMove->pos[j][i].King;
                             nextMove->pos[j + 2][i + 2].pieceNo = nextMove->pos[j][i].pieceNo;
+                            if (nextMove->pos[j + 2][i + 2].color == 1 && j + 2 == 7 && nextMove->pos[j + 2][i + 2].King == 0)
+                            {
+                                nextMove->pos[j + 2][i + 2].King = 1;
+                            }
                             nextMove->pos[j][i].color = -1;
                             nextMove->pos[j][i].King = -1;
                             nextMove->pos[j][i].pieceNo = -1;
@@ -1617,6 +1655,7 @@ void createkq(state curr, int k)
                             }
 
                             free(doubleCheck);
+                            kingrow = 0;
 
                             createkq(nextMove, k - 1);
                             free(nextMove);
@@ -1625,7 +1664,7 @@ void createkq(state curr, int k)
                 }
             }
         }
-        else    // Simplified version of the above code for normal moves
+        else // Simplified version of the above code for normal moves
         {
             for (i = 0; i < 8; i++)
             {
@@ -1641,6 +1680,10 @@ void createkq(state curr, int k)
                             nextMove->pos[j - 1][i - 1].color = nextMove->pos[j][i].color;
                             nextMove->pos[j - 1][i - 1].King = nextMove->pos[j][i].King;
                             nextMove->pos[j - 1][i - 1].pieceNo = nextMove->pos[j][i].pieceNo;
+                            if (nextMove->pos[j - 1][i - 1].color == 0 && j - 1 == 0 && nextMove->pos[j - 1][i - 1].King == 0)
+                            {
+                                nextMove->pos[j - 1][i - 1].King = 1;
+                            }
                             nextMove->pos[j][i].color = -1;
                             nextMove->pos[j][i].King = -1;
                             nextMove->pos[j][i].pieceNo = -1;
@@ -1662,6 +1705,10 @@ void createkq(state curr, int k)
                             nextMove->pos[j - 1][i + 1].color = nextMove->pos[j][i].color;
                             nextMove->pos[j - 1][i + 1].King = nextMove->pos[j][i].King;
                             nextMove->pos[j - 1][i + 1].pieceNo = nextMove->pos[j][i].pieceNo;
+                            if (nextMove->pos[j - 1][i + 1].color == 0 && j - 1 == 0 && nextMove->pos[j - 1][i + 1].King == 0)
+                            {
+                                nextMove->pos[j - 1][i + 1].King = 1;
+                            }
                             nextMove->pos[j][i].color = -1;
                             nextMove->pos[j][i].King = -1;
                             nextMove->pos[j][i].pieceNo = -1;
@@ -1683,6 +1730,10 @@ void createkq(state curr, int k)
                             nextMove->pos[j + 1][i - 1].color = nextMove->pos[j][i].color;
                             nextMove->pos[j + 1][i - 1].King = nextMove->pos[j][i].King;
                             nextMove->pos[j + 1][i - 1].pieceNo = nextMove->pos[j][i].pieceNo;
+                            if (nextMove->pos[j + 1][i - 1].color == 1 && j + 1 == 7 && nextMove->pos[j + 1][i - 1].King == 0)
+                            {
+                                nextMove->pos[j + 1][i - 1].King = 1;
+                            }
                             nextMove->pos[j][i].color = -1;
                             nextMove->pos[j][i].King = -1;
                             nextMove->pos[j][i].pieceNo = -1;
@@ -1704,6 +1755,10 @@ void createkq(state curr, int k)
                             nextMove->pos[j + 1][i + 1].color = nextMove->pos[j][i].color;
                             nextMove->pos[j + 1][i + 1].King = nextMove->pos[j][i].King;
                             nextMove->pos[j + 1][i + 1].pieceNo = nextMove->pos[j][i].pieceNo;
+                            if (nextMove->pos[j + 1][i + 1].color == 1 && j + 1 == 7 && nextMove->pos[j + 1][i + 1].King == 0)
+                            {
+                                nextMove->pos[j + 1][i + 1].King = 1;
+                            }
                             nextMove->pos[j][i].color = -1;
                             nextMove->pos[j][i].King = -1;
                             nextMove->pos[j][i].pieceNo = -1;
@@ -1773,7 +1828,8 @@ void kmoves()
     deletek();
 }
 
-void choosePiece(){
+void choosePiece()
+{
     // load the image into memory using SDL_image library function
     Surface = IMG_Load("resources/Pokeball.png");
     if (!Surface)
@@ -1802,18 +1858,20 @@ void choosePiece(){
     SDL_RenderPresent(Rend);
 
     char b[10], w[10];
-    do{
-    printf("\nBlack Player:\nChoose an icon to use(Use first character for row and second character for column)\n");
-    scanf("%s", b);
-    }while(strlen(b) == 2 && strcmp(b, "aa") <= 0 && strcmp(b, "ee") >= 0);
+    do
+    {
+        printf("\nBlack Player:\nChoose an icon to use(Use first character for row and second character for column)\n");
+        scanf("%s", b);
+    } while (strlen(b) != 2 || strcmp(b, "aa") < 0 || strcmp(b, "ee") > 0);
 
     strcat(blackPiece, b);
     strcat(blackPiece, ".png");
 
-    do{
-    printf("\nWhite Player:\nChoose an icon to use(Use first character for row and second character for column)\n");
-    scanf("%s", w);
-    }while(strlen(w) == 2 && strcmp(w, "aa") <= 0 && strcmp(w, "ee") >= 0 && strcmp(b, w) != 0);
+    do
+    {
+        printf("\nWhite Player:\nChoose an icon to use(Use first character for row and second character for column)\n");
+        scanf("%s", w);
+    } while (strlen(w) != 2 || strcmp(w, "aa") < 0 || strcmp(w, "ee") > 0 || strcmp(b, w) == 0);
 
     strcat(whitePiece, w);
     strcat(whitePiece, ".png");
@@ -1885,6 +1943,10 @@ void process()
                     addState();
                     kmoves();
                     removeState();
+                }
+                else if (event.key.keysym.sym == SDLK_d)
+                {
+                    victoryDisplay(2);
                 }
                 break;
             }
