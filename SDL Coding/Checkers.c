@@ -983,6 +983,22 @@ void destroy()
     SDL_DestroyTexture(White_tex);
     SDL_DestroyTexture(Nothing);
     SDL_DestroyTexture(Victory);
+    SDL_DestroyTexture(Piece);
+
+    state curr = front;
+    while(curr != NULL){
+        if(front != back){
+            front = front->next;
+            front->prev = NULL;
+            free(curr);
+        }
+        else if(front == back){
+            free(front);
+            front = NULL;
+            back = NULL;
+        }
+        curr = front;
+    }
 
     SDL_DestroyRenderer(Rend);
     SDL_DestroyWindow(Window);
