@@ -1068,6 +1068,14 @@ void victoryDisplay(int color)
     {
         Surface = IMG_Load("resources/draw.png");
     }
+    else if (color == 3)
+    {
+        Surface = IMG_Load("resources/black_forfeits.jpeg");
+    }
+    else if (color == 4)
+    {
+        Surface = IMG_Load("resources/white_forfeits.jpeg");
+    }
     if (!Surface)
     {
         printf("error creating surface\n");
@@ -1931,13 +1939,13 @@ void process()
                         if (movementPossible(0) == 0)
                         {
                             victoryDisplay(1);
-                            SDL_Delay(15000);
+                            SDL_Delay(10000);
                             close_req = 1;
                         }
                         else if (movementPossible(1) == 0)
                         {
                             victoryDisplay(0);
-                            SDL_Delay(15000);
+                            SDL_Delay(10000);
                             close_req = 1;
                         }
                     }
@@ -1964,7 +1972,20 @@ void process()
                 else if (event.key.keysym.sym == SDLK_d)
                 {
                     victoryDisplay(2);
-                    SDL_Delay(15000);
+                    SDL_Delay(10000);
+                    close_req = 1;
+                }
+                else if (event.key.keysym.sym == SDLK_f)
+                {
+                    if (turn == 0)
+                    {
+                        victoryDisplay(3);
+                    }
+                    else if (turn == 1)
+                    {
+                        victoryDisplay(4);
+                    }
+                    SDL_Delay(10000);
                     close_req = 1;
                 }
                 break;
