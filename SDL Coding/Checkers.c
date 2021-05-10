@@ -1810,7 +1810,7 @@ void kmoves()
     // UI Function to go through the next k moves
     int k, quit;
     state curr;
-    printf("Enter the value of k(Please let it be under 3 or Laptop go Boom):\n");
+    printf("Enter the value of k(Please let it be under 5 or Laptop go Boom):\n");
     scanf("%d", &k);
     createkq(back, k);
     curr = kfront;
