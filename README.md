@@ -3,7 +3,7 @@ A project by group 38, with the topic of '8x8 checkers' for DSA mini project sub
 
 # Prerequisites
 
-## Recommended Computer Specifications
+## Minimum Computer Specifications
 Graphics - Intel HD 620<br />
 RAM - 8 GB<br />
 Processor - Intel i7 7500U
