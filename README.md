@@ -83,6 +83,6 @@ From here there are 5 possible modes to progress to:
 
 4. Next K Moves - Press `k` on the keyboard to go into Next K Moves mode. In the Terminal, there will then be a prompt asking for the value of k. Then, similar to Review mode, the final state of the board after K moves will then be viewable. Exit is also done using `x`.
 
-5. Draw Mode - If the player presses `d` on the keyboard, the game then enters draw mode and the game ends with a draw. The screen closes after 15 seconds.
+5. Draw Mode - If the player presses `d` on the keyboard, the game then enters draw mode and the game ends with a draw. The screen closes after 10 seconds.
 
-6. Forfeit - If the player whose turn it is presses `f` on the keyboard, the game recognises that the player wants to forfeit, and game ends with the other player winning.
+6. Forfeit - If the player whose turn it is presses `f` on the keyboard, the game recognises that the player wants to forfeit, and game ends with the other player winning. The screen closes after 10 seconds.
