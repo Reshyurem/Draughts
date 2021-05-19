@@ -14,10 +14,9 @@ RAM - 32 GB<br />
 Processor - AMD Ryzen 9 5900X
 
 ## Installing SDL library
-To install in Ubuntu/Linux, open Terminal and run the following commands:
+To install in Arch, open Terminal and run the following commands:
 ```
-sudo apt-get update
-sudo apt-get install libsdl2-2.0-0 libsdl2-dbg libsdl2-dev libsdl2-image-2.0-0 libsdl2-image-dbg libsdl-image-dev
+sudo pacman -S sdl2 sdl2_image sdl2_ttf
 ```
 # Running the game
 To run the game, you need to run the `Makefile` that is included in the repository.<br />
